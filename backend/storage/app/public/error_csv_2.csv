@@ -1,0 +1,7 @@
+ID,名前,メールアドレス,電話番号,住所,生年月日,性別,会員状態,メモ,プロフィール画像,ポイント,最終ログイン
+,User 6,user6@example.com,090-6789-0123,東京都目黒区6-6-6,1996-06-06,male,active,"メモ6,カンマを含む",profile6.jpg,600,
+,User 7,user7@example.com,090-7890-1234,東京都品川区7-7-7,1997-07-07,female,inactive,"メモ7
+改行を含む",profile7.jpg,700,
+,User 8,user8@example.com,090-8901-2345,東京都大田区8-8-8,1998-08-08,other,pending,メモ8,profile8.jpg,800,
+,User 9,user9@example.com,090-9012-3456,東京都江東区9-9-9,1999-09-09,male,expired,メモ9,profile9.jpg,900,
+,User 10,user10@example.com,090-0123-4567,東京都墨田区10-10-10,2000-10-10,female,active,メモ10,profile10.jpg,1000,
