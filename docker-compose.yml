@@ -1,0 +1,68 @@
+version: '3'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: internship-challenge-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-laravel}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-password}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-password}
+      MYSQL_USER: ${DB_USERNAME:-laravel}
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - internship-challenge-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: internship-challenge-backend
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./backend:/var/www/html
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    networks:
+      - internship-challenge-network
+    command: >
+      bash -c "composer install &&
+               php artisan key:generate --force &&
+               php artisan migrate --force &&
+               php artisan serve --host=0.0.0.0 --port=8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: internship-challenge-frontend
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - internship-challenge-network
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+    command: npm run dev
+
+networks:
+  internship-challenge-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    driver: local
