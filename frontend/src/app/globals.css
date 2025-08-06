@@ -17,29 +17,33 @@
     --background: #0a0a0a;
     --foreground: #ededed;
   }
-  
+
   /* ダークモード用のカスタムスタイル */
   .bg-white {
     background-color: #1a1a1a !important;
   }
-  
-  .bg-gray-50, .bg-gray-100 {
+
+  .bg-gray-50,
+  .bg-gray-100 {
     background-color: #252525 !important;
   }
-  
-  .text-gray-700, .text-gray-900 {
+
+  .text-gray-700,
+  .text-gray-900 {
     color: #e1e1e1 !important;
   }
-  
+
   .text-gray-500 {
     color: #a1a1a1 !important;
   }
-  
-  .border, .border-gray-200 {
+
+  .border,
+  .border-gray-200 {
     border-color: #333333 !important;
   }
-  
-  .shadow, .shadow-md {
+
+  .shadow,
+  .shadow-md {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5) !important;
   }
 }

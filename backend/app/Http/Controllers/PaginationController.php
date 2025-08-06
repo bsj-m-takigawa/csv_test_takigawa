@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Illuminate\Http\Request;
 
 class PaginationController extends Controller
 {
@@ -13,10 +12,10 @@ class PaginationController extends Controller
     public function getUsersAll()
     {
         $users = User::all();
-        
+
         return response()->json([
             'users' => $users,
-            'total' => count($users)
+            'total' => count($users),
         ]);
     }
 }

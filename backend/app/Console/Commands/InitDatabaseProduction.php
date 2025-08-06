@@ -38,15 +38,15 @@ class InitDatabaseProduction extends Command
 
         $this->info('シードデータを投入します（100万件のユーザーデータ）...');
         $this->warn('この処理には時間がかかります。しばらくお待ちください...');
-        
+
         Artisan::call('db:seed', [
             '--force' => true,
-            '--class' => 'Database\\Seeders\\ProductionDatabaseSeeder'
+            '--class' => 'Database\\Seeders\\ProductionDatabaseSeeder',
         ]);
-        
+
         $this->info('本番環境用データベースの初期化が完了しました！');
         $this->info('アプリケーションの準備ができました。');
-        
+
         return Command::SUCCESS;
     }
 }
