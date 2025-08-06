@@ -5,6 +5,10 @@
   - api/
     - users.md: ユーザーAPI
     - users_basic_spec.md: ユーザーAPI基本仕様
+    - openapi.yaml: OpenAPI雛形
+    - csv.md: CSV仕様
+    - auth.md: 認証方針
+    - pagination.md: ページネーション仕様
   - ux/
     - ux_guidelines.md: UXガイドライン
 - risk/
