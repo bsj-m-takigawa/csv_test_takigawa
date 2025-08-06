@@ -1,11 +1,10 @@
 <?php
 
+use App\Http\Controllers\CsvController;
+use App\Http\Controllers\PaginationController;
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\CsvController;
-use App\Http\Controllers\VulnerableController;
-use App\Http\Controllers\PaginationController;
 
 /*
 |--------------------------------------------------------------------------

@@ -28,7 +28,6 @@ class User extends Authenticatable
         'membership_status',
         'notes',
         'profile_image',
-        'points',
         'last_login_at',
     ];
 
