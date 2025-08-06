@@ -2,7 +2,13 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -23,8 +29,52 @@ class Handler extends ExceptionHandler
      */
     public function register(): void
     {
-        $this->reportable(function (Throwable $e) {
-            //
+        $this->renderable(function (Throwable $e, $request) {
+            if ($request->is('api/*')) {
+                return $this->handleApiException($e);
+            }
         });
+    }
+
+    private function handleApiException(Throwable $e): JsonResponse
+    {
+        $statusCode = $this->getExceptionStatusCode($e);
+
+        $response = [
+            'message' => $e->getMessage() ?: 'An error occurred',
+            'code' => $e->getCode(),
+            'errors' => [],
+        ];
+
+        if ($e instanceof ValidationException) {
+            $response['errors'] = $e->errors();
+        }
+
+        return response()->json($response, $statusCode);
+    }
+
+    private function getExceptionStatusCode(Throwable $e): int
+    {
+        if ($e instanceof HttpException) {
+            return $e->getStatusCode();
+        }
+
+        if ($e instanceof ModelNotFoundException) {
+            return 404;
+        }
+
+        if ($e instanceof AuthenticationException) {
+            return 401;
+        }
+
+        if ($e instanceof AuthorizationException) {
+            return 403;
+        }
+
+        if ($e instanceof ValidationException) {
+            return 422;
+        }
+
+        return 500;
     }
 }

@@ -4,9 +4,32 @@
 
 ## 技術スタック
 
-- **フロントエンド**: Next.js, TypeScript, Tailwind CSS, shadcn/ui
+- **フロントエンド**: Next.js 15, TypeScript, Tailwind CSS 4, react-window
 - **バックエンド**: Laravel 11, PHP 8.1, MySQL 8.0
 - **インフラ**: Docker, Docker Compose
+
+## パフォーマンス最適化済み
+
+このプロジェクトには包括的なパフォーマンス最適化が適用されています：
+
+### ✅ フロントエンド最適化
+- **React.memo最適化**: UserTable, FilterPanel, SearchField コンポーネント
+- **fetch API移行**: axios削除により13KBのバンドルサイズ削減  
+- **動的インポート**: Code Splitting によるローディング性能向上
+- **Virtual Scrolling**: 1000件以上のデータで自動有効化
+
+### ✅ バックエンド最適化
+- **API圧縮**: gzip圧縮により**85-88%**のデータ転送量削減
+- **フルテキスト検索**: MySQL FULLTEXTインデックスで検索性能向上
+- **サーバーサイドページネーション**: 大量データの効率的処理
+
+### 📊 パフォーマンス結果
+- **フロントエンド**: `/users/list` 8.49kB → 5.86kB (30%削減)
+- **API圧縮**: 100件データ 43KB → 5.2KB (87.9%削減)
+- **検索性能**: 1000件データ検索を36msで処理 (364%改善)
+- **大容量対応**: Virtual Scrolling で1000件以上表示可能
+
+詳細は [フロントエンドパフォーマンス最適化ガイド](./docs/system/frontend-performance-optimization.md) および [APIパフォーマンス最適化](./docs/issues/issue-25-api-compression.md) を参照してください。
 
 ## セットアップ手順
 
@@ -51,6 +74,34 @@ php artisan app:init-database-production
 ## 課題内容
 
 このアプリケーションには意図的に様々な問題が含まれています。これらの問題と修正課題の詳細については、リポジトリ内の `ISSUES.md` ファイルを参照してください。
+
+## テスト実行方法
+
+### バックエンドテスト
+
+PHPUnitテストはDocker内で実行する必要があります：
+
+```bash
+# 全テストを実行
+docker compose exec backend composer run test
+
+# 特定のテストファイルを実行
+docker compose exec backend ./vendor/bin/phpunit tests/Feature/PaginationTest.php
+
+# 特定のテストメソッドを実行
+docker compose exec backend ./vendor/bin/phpunit --filter test_default_pagination
+```
+
+**注意**: テストはDocker内のMySQLを使用するため、`docker compose exec`を使わずローカルで実行するとデータベース接続エラーになります。
+
+### フロントエンドテスト
+
+```bash
+cd frontend
+npm run lint        # ESLintチェック
+npm run typecheck   # TypeScript型チェック
+npm run build       # ビルドテスト
+```
 
 ## テスト用データ
 

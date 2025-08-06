@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Link from "next/link";
+import Header from "@/components/Header";
+import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,8 +15,23 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "インターン課題 - ユーザー管理アプリ",
-  description: "ユーザーデータのCRUD機能を持つWebアプリケーション",
+  title: "CSV Horizon Beta - ユーザー管理システム",
+  description: "高速で効率的なユーザーデータ管理システム",
+  manifest: "/manifest.json",
+  themeColor: "#1f2937",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "CSV Horizon",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#1f2937",
 };
 
 export default function RootLayout({
@@ -25,48 +41,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <div className="min-h-screen flex flex-col">
-          <header className="bg-slate-800 text-white p-4">
-            <div className="container mx-auto">
-              <h1 className="text-2xl font-bold">ユーザー管理アプリ</h1>
-              <nav className="mt-2">
-                <ul className="flex space-x-4">
-                  <li>
-                    <Link href="/" className="hover:underline">
-                      ホーム
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/users/list" className="hover:underline">
-                      ユーザー一覧
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/users/add" className="hover:underline">
-                      ユーザー追加
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/users/import" className="hover:underline">
-                      CSVインポート
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/users/export" className="hover:underline">
-                      CSVエクスポート
-                    </Link>
-                  </li>
-                </ul>
-              </nav>
-            </div>
-          </header>
-          <main className="flex-grow container mx-auto p-4">{children}</main>
-          <footer className="bg-slate-800 text-white p-4">
-            <div className="container mx-auto text-center">
-              <p>インターン課題 - ユーザー管理アプリ</p>
+          <Header />
+          <main className="flex-grow container mx-auto p-4 pt-20">{children}</main>
+          {/* <ServiceWorkerRegistration /> */}
+          <footer className="border-t border-gray-200 dark:border-gray-800 mt-auto">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              <div className="flex flex-col md:flex-row justify-between items-center">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  © 2025 User Management System
+                </p>
+                <div className="flex space-x-6 mt-4 md:mt-0">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">v1.0.0</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Next.js + Laravel</span>
+                </div>
+              </div>
             </div>
           </footer>
         </div>

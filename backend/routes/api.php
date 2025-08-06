@@ -21,8 +21,28 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::get('users/all', [PaginationController::class, 'getUsersAll']);
-Route::post('users/import', [CsvController::class, 'import']);
-Route::get('users/export', [CsvController::class, 'export']);
+// CSV操作とステータスカウント（特定のパスを先に定義）
+Route::middleware(['throttle:10,1'])->group(function () {
+    Route::post('users/import', [CsvController::class, 'import']);
+    Route::post('users/check-duplicates', [CsvController::class, 'checkDuplicates']);
+    Route::get('users/export', [CsvController::class, 'export']);
+    Route::get('users/sample-csv', [CsvController::class, 'sampleCsv']);
+});
 
-Route::resource('users', UserController::class);
+// ステータスカウントAPI（{user}パラメータより前に定義）
+Route::get('users/status-counts', [PaginationController::class, 'statusCounts']);
+
+// 公開API（読み取り専用）
+Route::get('users', [PaginationController::class, 'index']);
+Route::get('users/{user}', [UserController::class, 'show']);
+
+// レート制限付きAPI（書き込み操作）
+Route::middleware(['throttle:60,1'])->group(function () {
+    Route::post('users', [UserController::class, 'store']);
+    Route::put('users/{user}', [UserController::class, 'update']);
+    Route::delete('users/{user}', [UserController::class, 'destroy']);
+
+    // バルク操作API
+    Route::post('users/bulk-delete', [UserController::class, 'bulkDelete']);
+    Route::post('users/bulk-export', [CsvController::class, 'bulkExport']);
+});

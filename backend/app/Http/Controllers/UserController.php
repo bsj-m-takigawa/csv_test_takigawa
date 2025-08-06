@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -38,6 +41,7 @@ class UserController extends Controller
         $data['membership_status'] = $data['membership_status'] ?? 'pending';
         try {
             $user = User::create($data);
+            Log::info('User created', ['id' => $user->id, 'name' => $user->name]);
 
             return response()->json($user, 201);
         } catch (\Exception $e) {
@@ -50,10 +54,7 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        $user = User::find($id);
-        if (! $user) {
-            return response()->json(['message' => 'User not found'], 404);
-        }
+        $user = User::findOrFail($id);
 
         return response()->json($user);
     }
@@ -63,11 +64,7 @@ class UserController extends Controller
      */
     public function edit(string $id)
     {
-        $user = User::find($id);
-
-        if (! $user) {
-            return response()->json(['message' => 'User not found'], 404);
-        }
+        $user = User::findOrFail($id);
 
         return response()->json($user);
     }
@@ -77,10 +74,7 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request, string $id)
     {
-        $user = User::find($id);
-        if (! $user) {
-            return response()->json(['message' => 'User not found'], 404);
-        }
+        $user = User::findOrFail($id);
         $data = $request->validated();
         if (array_key_exists('password', $data) && $data['password']) {
             $data['password'] = Hash::make($data['password']);
@@ -88,6 +82,7 @@ class UserController extends Controller
             unset($data['password']);
         }
         $user->update($data);
+        Log::info('User updated', ['id' => $user->id]);
 
         return response()->json($user);
     }
@@ -98,14 +93,128 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
-        $user = User::find($id);
-
-        if (! $user) {
-            return response()->json(['message' => 'User not found'], 404);
-        }
+        $user = User::findOrFail($id);
 
         $user->delete();
+        Log::info('User deleted', ['id' => $id]);
 
-        return response()->json(['status' => 'processing'], 200);
+        return response()->json(['message' => 'User deleted successfully'], 200);
+    }
+
+    /**
+     * バルク削除機能
+     * - 個別選択：user_ids配列で指定されたユーザーを削除
+     * - 全件選択：select_all=trueで全ユーザー削除
+     * - 条件選択：select_all=trueかつfilters指定で条件に一致するユーザーを削除
+     */
+    public function bulkDelete(Request $request)
+    {
+        $validated = $request->validate([
+            'user_ids' => ['array', 'nullable'],
+            'user_ids.*' => ['integer', 'exists:users,id'],
+            'select_all' => ['boolean'],
+            'select_type' => ['string', 'in:all,filtered', 'required_if:select_all,true'],
+            'filters' => ['array', 'nullable', 'required_if:select_type,filtered'],
+            'filters.q' => ['string', 'nullable'],
+            'filters.status' => ['string', 'nullable'],
+            'filters.created' => ['string', 'nullable', 'in:today,week,month,year'],
+        ]);
+
+        $deletedCount = 0;
+        $errors = [];
+
+        DB::beginTransaction();
+        try {
+            if ($validated['select_all'] ?? false) {
+                // 全件または条件選択
+                $query = User::query();
+
+                if (($validated['select_type'] ?? '') === 'filtered' && ! empty($validated['filters'])) {
+                    $filters = $validated['filters'];
+
+                    // 検索条件を適用
+                    if (! empty($filters['q'])) {
+                        $q = $filters['q'];
+                        if (config('database.default') === 'mysql') {
+                            $query->whereFullText(['name', 'email', 'phone_number'], $q);
+                        } else {
+                            $query->where(function ($sub) use ($q) {
+                                $sub->where('name', 'like', "%{$q}%")
+                                    ->orWhere('email', 'like', "%{$q}%")
+                                    ->orWhere('phone_number', 'like', "%{$q}%");
+                            });
+                        }
+                    }
+
+                    // ステータスフィルタ
+                    if (! empty($filters['status'])) {
+                        $statuses = explode(',', $filters['status']);
+                        $query->whereIn('membership_status', $statuses);
+                    }
+
+                    // 作成日フィルタ
+                    if (! empty($filters['created'])) {
+                        $now = now();
+                        switch ($filters['created']) {
+                            case 'today':
+                                $query->whereDate('created_at', $now->toDateString());
+                                break;
+                            case 'week':
+                                $query->whereBetween('created_at', [$now->startOfWeek(), $now->endOfWeek()]);
+                                break;
+                            case 'month':
+                                $query->whereMonth('created_at', $now->month)
+                                    ->whereYear('created_at', $now->year);
+                                break;
+                            case 'year':
+                                $query->whereYear('created_at', $now->year);
+                                break;
+                        }
+                    }
+                }
+
+                $deletedCount = $query->count();
+                $query->delete();
+
+            } else {
+                // 個別選択
+                $userIds = $validated['user_ids'] ?? [];
+                if (empty($userIds)) {
+                    return response()->json(['error' => '削除するユーザーが選択されていません'], 400);
+                }
+
+                $deletedCount = User::whereIn('id', $userIds)->count();
+                User::whereIn('id', $userIds)->delete();
+            }
+
+            DB::commit();
+
+            Log::info('Bulk delete completed', [
+                'deleted_count' => $deletedCount,
+                'select_all' => $validated['select_all'] ?? false,
+                'select_type' => $validated['select_type'] ?? null,
+                'user_ids_count' => count($validated['user_ids'] ?? []),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "{$deletedCount}件のユーザーを削除しました",
+                'deleted_count' => $deletedCount,
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Bulk delete failed', [
+                'error' => $e->getMessage(),
+                'user_ids' => $validated['user_ids'] ?? [],
+                'select_all' => $validated['select_all'] ?? false,
+            ]);
+
+            return response()->json([
+                'error' => 'バルク削除処理中にエラーが発生しました',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

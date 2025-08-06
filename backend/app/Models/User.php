@@ -25,10 +25,8 @@ class User extends Authenticatable
         'address',
         'birth_date',
         'gender',
-        'membership_status',
         'notes',
         'profile_image',
-        'last_login_at',
     ];
 
     /**

@@ -4,7 +4,7 @@
 
 ---
 
-## 1. SQLインジェクションの脆弱性 (リスク: 重大)
+## 1. SQLインジェクションの脆弱性 (リスク: 重大) - 修正済み
 
 ### 問題点
 
@@ -31,9 +31,15 @@ $user = User::findOrFail($id);
 
 `findOrFail` を使用することで、安全なクエリ（プリペアドステートメント）が実行されるだけでなく、ユーザーが見つからなかった場合に自動的に404エラーを返すため、コードもシンプルになります。
 
+**修正内容:**
+
+*   `UserController` の全メソッド（`show`、`edit`、`update`、`destroy`）で `find()` から `findOrFail()` に変更しました。
+*   実際のコントローラーには生SQLの使用はなく、すべてEloquent ORMを使用していることを確認しました。
+*   デモ用のSQLインジェクションコマンドは残していますが、実際のアプリケーションコードには影響しません。
+
 ---
 
-## 2. 不適切なマスアサインメントの脆弱性 (リスク: 重要)
+## 2. 不適切なマスアサインメントの脆弱性 (リスク: 重要) - 修正済み
 
 ### 問題点
 
@@ -58,9 +64,14 @@ $validatedData = $request->validate([...]); // バリデーションルールを
 $user->update($validatedData);
 ```
 
+**修正内容:**
+
+*   `app/Models/User.php` の `$fillable` プロパティから `membership_status` と `last_login_at` を削除しました。
+*   `app/Http/Controllers/CsvController.php` の `import` メソッドで、CSVファイルから `membership_status` と `points` を直接設定しないように修正しました。
+
 ---
 
-## 3. 不十分なバリデーション (リスク: 重要)
+## 3. 不十分なバリデーション (リスク: 重要) - 修正済み
 
 ### 問題点
 
@@ -82,6 +93,13 @@ Laravelの `Validator` を最大限に活用し、すべての入力に対して
 'birth_date' => 'nullable|date_format:Y-m-d',
 'points' => 'required|integer|min:0',
 ```
+
+**修正内容:**
+
+*   `StoreUserRequest` と `UpdateUserRequest` のバリデーションルールを強化しました。
+    *   パスワードには `Password` ルールを使用し、大文字・小文字・数字・記号を含む8文字以上としました。
+    *   電話番号には正規表現を追加し、フォーマットを厳格化しました。
+    *   プロフィール画像には `active_url` を追加し、有効なURLであることを確認するようにしました。
 
 ---
 

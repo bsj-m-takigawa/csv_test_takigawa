@@ -4,14 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createUser } from "../../../lib/api/users";
+import { Button, Input, Card, CardHeader, CardTitle, CardContent, Alert, Select } from "@/components/ui";
 
 export default function AddUserPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [serverErrors, setServerErrors] = useState<Record<string, string[]>>(
-    {},
-  );
+  const [serverErrors, setServerErrors] = useState<Record<string, string[]>>({});
 
   const [formData, setFormData] = useState({
     name: "",
@@ -28,11 +27,22 @@ export default function AddUserPage() {
   });
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
+    
+    // 生年月日の場合は日付の妥当性をチェック
+    if (name === 'birth_date' && value) {
+      const inputDate = new Date(value);
+      const today = new Date();
+      const minDate = new Date('1900-01-01');
+      
+      // 日付が有効範囲外の場合は更新しない
+      if (inputDate < minDate || inputDate > today) {
+        return;
+      }
+    }
+    
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -42,6 +52,18 @@ export default function AddUserPage() {
     if (!formData.name) {
       setError("名前は必須です。");
       return;
+    }
+    
+    // 生年月日のバリデーション
+    if (formData.birth_date) {
+      const inputDate = new Date(formData.birth_date);
+      const today = new Date();
+      const minDate = new Date('1900-01-01');
+      
+      if (inputDate < minDate || inputDate > today) {
+        setError("生年月日は1900年以降、今日までの日付を入力してください。");
+        return;
+      }
     }
 
     try {
@@ -57,15 +79,10 @@ export default function AddUserPage() {
         phone_number: formData.phone_number || undefined,
         address: formData.address || undefined,
         birth_date: formData.birth_date || undefined,
-        gender:
-          (formData.gender as "" | "male" | "female" | "other") || undefined,
+        gender: (formData.gender as "" | "male" | "female" | "other") || undefined,
         membership_status:
-          (formData.membership_status as
-            | ""
-            | "active"
-            | "inactive"
-            | "pending"
-            | "expired") || undefined,
+          (formData.membership_status as "" | "active" | "inactive" | "pending" | "expired") ||
+          undefined,
         notes: formData.notes || undefined,
       } as Record<string, unknown>;
 
@@ -74,9 +91,8 @@ export default function AddUserPage() {
     } catch (err: unknown) {
       console.error("Error creating user:", err);
 
-      const resp = (
-        err as { response?: { data?: { errors?: Record<string, string[]> } } }
-      ).response;
+      const resp = (err as { response?: { data?: { errors?: Record<string, string[]> } } })
+        .response;
       if (resp && resp.data && resp.data.errors) {
         setServerErrors(resp.data.errors as Record<string, string[]>);
         setError("入力内容に問題があります。");
@@ -89,258 +105,264 @@ export default function AddUserPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">ユーザー追加</h1>
-        <Link
-          href="/users/list"
-          className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-        >
-          一覧に戻る
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* ヘッダー */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-light text-gray-900 dark:text-white">新規ユーザー登録</h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            必須項目を入力してユーザーを登録してください
+          </p>
+        </div>
+        <Link href="/users/list">
+          <Button variant="outline">
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            一覧に戻る
+          </Button>
         </Link>
       </div>
 
+      {/* エラーメッセージ */}
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
+        <Alert variant="error" onClose={() => setError(null)}>
+          <div className="flex items-start gap-3">
+            <svg className="h-5 w-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            <div className="text-sm">
+              <p className="font-medium mb-1">登録エラー</p>
+              <p>{error}</p>
+            </div>
+          </div>
+        </Alert>
       )}
 
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
-      >
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="name"
-          >
-            名前 <span className="text-red-500">*</span>
-          </label>
-          <input
-            className={`shadow appearance-none border ${serverErrors.name ? "border-red-500" : ""} rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline`}
-            id="name"
-            type="text"
-            name="name"
-            placeholder="山田 太郎"
-            value={formData.name}
-            onChange={handleChange}
-          />
-          {serverErrors.name && (
-            <p className="text-red-500 text-xs italic">
-              {serverErrors.name[0]}
-            </p>
-          )}
-        </div>
+      <form onSubmit={handleSubmit} className="space-y-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>基本情報</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* 名前 */}
+            <div className="space-y-2">
+              <Input
+                label="名前"
+                id="name"
+                type="text"
+                name="name"
+                placeholder="山田 太郎"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                error={serverErrors.name?.[0]}
+              />
+            </div>
 
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="email"
-          >
-            メールアドレス <span className="text-red-500">*</span>
-          </label>
-          <input
-            className={`shadow appearance-none border ${serverErrors.email ? "border-red-500" : ""} rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline`}
-            id="email"
-            type="text"
-            name="email"
-            placeholder="taro@example.com"
-            value={formData.email}
-            onChange={handleChange}
-          />
-          {serverErrors.email && (
-            <p className="text-red-500 text-xs italic">
-              {serverErrors.email[0]}
-            </p>
-          )}
-        </div>
+            {/* メールアドレス */}
+            <div className="space-y-2">
+              <Input
+                label="メールアドレス"
+                id="email"
+                type="email"
+                name="email"
+                placeholder="taro@example.com"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                error={serverErrors.email?.[0]}
+              />
+            </div>
 
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="password"
-          >
-            パスワード <span className="text-red-500">*</span>
-          </label>
-          <input
-            className={`shadow appearance-none border ${serverErrors.password ? "border-red-500" : ""} rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline`}
-            id="password"
-            type="password"
-            name="password"
-            placeholder="8文字以上"
-            value={formData.password}
-            onChange={handleChange}
-          />
-          {serverErrors.password && (
-            <p className="text-red-500 text-xs italic">
-              {serverErrors.password[0]}
-            </p>
-          )}
-        </div>
+            {/* パスワード */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Input
+                  label="パスワード"
+                  id="password"
+                  type="password"
+                  name="password"
+                  placeholder="8文字以上"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  error={serverErrors.password?.[0]}
+                  helperText="英数字記号を8文字以上"
+                />
+              </div>
 
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="password_confirmation"
-          >
-            パスワード(確認) <span className="text-red-500">*</span>
-          </label>
-          <input
-            className={`shadow appearance-none border ${serverErrors.password_confirmation ? "border-red-500" : ""} rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline`}
-            id="password_confirmation"
-            type="password"
-            name="password_confirmation"
-            placeholder="もう一度同じパスワード"
-            value={formData.password_confirmation}
-            onChange={handleChange}
-          />
-          {serverErrors.password_confirmation && (
-            <p className="text-red-500 text-xs italic">
-              {serverErrors.password_confirmation[0]}
-            </p>
-          )}
-        </div>
+              <div className="space-y-2">
+                <Input
+                  label="パスワード（確認）"
+                  id="password_confirmation"
+                  type="password"
+                  name="password_confirmation"
+                  placeholder="もう一度同じパスワード"
+                  value={formData.password_confirmation}
+                  onChange={handleChange}
+                  required
+                  error={serverErrors.password_confirmation?.[0]}
+                  helperText="上記と同じパスワードを入力"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="phone_number"
-          >
-            電話番号
-          </label>
-          <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="phone_number"
-            type="text"
-            name="phone_number"
-            placeholder="090-1234-5678"
-            value={formData.phone_number}
-            onChange={handleChange}
-          />
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>連絡先情報</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* 電話番号と住所 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Input
+                  label="電話番号"
+                  id="phone_number"
+                  type="tel"
+                  name="phone_number"
+                  placeholder="090-1234-5678"
+                  value={formData.phone_number}
+                  onChange={handleChange}
+                  helperText="ハイフンありなしどちらでもOK"
+                />
+              </div>
+              <div className="space-y-2">
+                <Input
+                  label="住所"
+                  id="address"
+                  type="text"
+                  name="address"
+                  placeholder="東京都渋谷区神宮前1-2-3"
+                  value={formData.address}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="address"
-          >
-            住所
-          </label>
-          <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="address"
-            type="text"
-            name="address"
-            placeholder="東京都〇〇区〇〇1-2-3"
-            value={formData.address}
-            onChange={handleChange}
-          />
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>個人情報・会員設定</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* 生年月日と性別 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Input
+                  label="生年月日"
+                  id="birth_date"
+                  type="date"
+                  name="birth_date"
+                  value={formData.birth_date}
+                  onChange={handleChange}
+                  min="1900-01-01"
+                  max={new Date().toISOString().split('T')[0]}
+                  helperText="1900年以降、今日までの日付を選択してください"
+                />
+              </div>
+              <div className="space-y-2">
+                <Select
+                  label="性別"
+                  id="gender"
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  placeholder="選択してください"
+                  options={[
+                    { value: "male", label: "男性" },
+                    { value: "female", label: "女性" },
+                    { value: "other", label: "その他" },
+                  ]}
+                />
+              </div>
+            </div>
+            
+            {/* 会員状態とポイント */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Select
+                  label="会員状態"
+                  id="membership_status"
+                  name="membership_status"
+                  value={formData.membership_status}
+                  onChange={handleChange}
+                  options={[
+                    { value: "pending", label: "保留中" },
+                    { value: "active", label: "アクティブ" },
+                    { value: "inactive", label: "非アクティブ" },
+                    { value: "expired", label: "期限切れ" },
+                  ]}
+                />
+              </div>
+              <div className="space-y-2">
+                <Input
+                  label="初期ポイント"
+                  id="points"
+                  type="number"
+                  name="points"
+                  value={formData.points}
+                  onChange={handleChange}
+                  min="0"
+                  helperText="0以上の整数で入力"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="birth_date"
-          >
-            生年月日
-          </label>
-          <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="birth_date"
-            type="date"
-            name="birth_date"
-            placeholder="YYYY-MM-DD"
-            value={formData.birth_date}
-            onChange={handleChange}
-          />
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>備考</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* メモ */}
+            <div className="space-y-2">
+              <label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                メモ・備考
+              </label>
+              <textarea
+                id="notes"
+                name="notes"
+                rows={4}
+                placeholder="自由入力（最大2000文字）"
+                value={formData.notes}
+                onChange={handleChange}
+                className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 resize-none"
+                maxLength={2000}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {formData.notes.length}/2000文字
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="gender"
-          >
-            性別
-          </label>
-          <select
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="gender"
-            name="gender"
-            value={formData.gender}
-            onChange={handleChange}
-          >
-            <option value="">選択してください</option>
-            <option value="male">男性</option>
-            <option value="female">女性</option>
-            <option value="other">その他</option>
-          </select>
-        </div>
-
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="membership_status"
-          >
-            会員状態
-          </label>
-          <select
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="membership_status"
-            name="membership_status"
-            value={formData.membership_status}
-            onChange={handleChange}
-          >
-            <option value="pending">保留中</option>
-            <option value="active">有効</option>
-            <option value="inactive">無効</option>
-            <option value="expired">期限切れ</option>
-          </select>
-        </div>
-
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="points"
-          >
-            ポイント
-          </label>
-          <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="points"
-            type="number"
-            name="points"
-            value={formData.points}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="notes"
-          >
-            メモ
-          </label>
-          <textarea
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="notes"
-            name="notes"
-            rows={4}
-            placeholder="自由入力（最大2000文字）"
-            value={formData.notes}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="flex items-center justify-between">
-          <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+        {/* アクションボタン */}
+        <div className="flex flex-col sm:flex-row gap-4 pt-6">
+          <Button
             type="submit"
+            variant="primary"
+            size="lg"
             disabled={loading}
+            isLoading={loading}
+            className="flex-1 sm:flex-initial"
           >
-            {loading ? "処理中..." : "登録する"}
-          </button>
+            {loading ? "登録中..." : "ユーザーを登録する"}
+          </Button>
+          <Link href="/users/list">
+            <Button
+              variant="outline"
+              size="lg"
+              disabled={loading}
+              className="w-full sm:w-auto"
+            >
+              キャンセル
+            </Button>
+          </Link>
         </div>
       </form>
     </div>
