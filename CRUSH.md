@@ -13,8 +13,11 @@ Lint/Format (目的: 一貫したコード品質と自動整形)
 - Backend Pint: cd backend && ./vendor/bin/pint -v  # PSR-12 準拠で整形
 
 Typecheck/Tests (目的: 破壊的変更の早期検知と最小単位の検証)
-- Frontend TypeScript: cd frontend && npx tsc --noEmit  # 型チェックのみ
-- Backend 全テスト: cd backend && ./vendor/bin/phpunit  # フィーチャ/ユニット両方
+- Frontend TypeScript: cd frontend && npm run typecheck  # 型チェック
+- Frontend Lint: cd frontend && npm run lint  # ESLint
+- Frontend Build: cd frontend && npm run build  # 本番ビルド検証
+- Backend Pint: cd backend && composer run pint  # PSR-12 準拠で整形
+- Backend 全テスト: cd backend && composer run test  # PHPUnit
 - Backend 単一ファイル: cd backend && ./vendor/bin/phpunit tests/Feature/ExampleTest.php
 - Backend 単一メソッド: cd backend && ./vendor/bin/phpunit --filter test_example_method
 
