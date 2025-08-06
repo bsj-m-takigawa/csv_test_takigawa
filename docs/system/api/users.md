@@ -3,7 +3,7 @@
 ベースURL: /api
 
 ## エンドポイント
-- GET /users?page={n}&per_page={m}&sort={field}&order={asc|desc}&q={keyword}
+- GET /users?page={n}&per_page={m}&sort={field}&order={asc|desc}&q={keyword}  // ページネーションAPI
 - GET /users/{id}
 - POST /users
 - PUT /users/{id}
@@ -16,6 +16,7 @@
 
 ## レスポンス
 - 200/201: 単体ユーザー または ページネート結果 {data[], meta{total,page,per_page,pages}}
+- 422: 不正なパラメータ（page, per_page, sort, order）
 - 404: {message}
 - 422: {message, errors{...}}
 
