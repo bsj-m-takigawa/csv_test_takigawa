@@ -1,6 +1,6 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 export interface User {
   id: number;
@@ -9,8 +9,8 @@ export interface User {
   phone_number?: string;
   address?: string;
   birth_date?: string;
-  gender?: 'male' | 'female' | 'other';
-  membership_status?: 'active' | 'inactive' | 'pending' | 'expired';
+  gender?: "male" | "female" | "other";
+  membership_status?: "active" | "inactive" | "pending" | "expired";
   notes?: string;
   profile_image?: string;
   points?: number;
@@ -24,7 +24,7 @@ export const fetchUsers = async () => {
     const response = await axios.get(`${API_URL}/users/all`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching users:', error);
+    console.error("Error fetching users:", error);
     throw error;
   }
 };
@@ -39,12 +39,12 @@ export const fetchUser = async (id: number) => {
   }
 };
 
-export const createUser = async (userData: Partial<User>) => {
+export const createUser = async (userData: Record<string, unknown>) => {
   try {
     const response = await axios.post(`${API_URL}/users`, userData);
     return response.data;
   } catch (error) {
-    console.error('Error creating user:', error);
+    console.error("Error creating user:", error);
     throw error;
   }
 };
@@ -72,17 +72,17 @@ export const deleteUser = async (id: number) => {
 export const importUsers = async (file: File) => {
   try {
     const formData = new FormData();
-    formData.append('csv_file', file);
-    
+    formData.append("csv_file", file);
+
     const response = await axios.post(`${API_URL}/users/import`, formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
-    
+
     return response.data;
   } catch (error) {
-    console.error('Error importing users:', error);
+    console.error("Error importing users:", error);
     throw error;
   }
 };
@@ -90,20 +90,20 @@ export const importUsers = async (file: File) => {
 export const exportUsers = async () => {
   try {
     const response = await axios.get(`${API_URL}/users/export`, {
-      responseType: 'blob',
+      responseType: "blob",
     });
-    
+
     const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.setAttribute('download', `users_${new Date().toISOString()}.csv`);
+    link.setAttribute("download", `users_${new Date().toISOString()}.csv`);
     document.body.appendChild(link);
     link.click();
     link.remove();
-    
+
     return true;
   } catch (error) {
-    console.error('Error exporting users:', error);
+    console.error("Error exporting users:", error);
     throw error;
   }
 };
