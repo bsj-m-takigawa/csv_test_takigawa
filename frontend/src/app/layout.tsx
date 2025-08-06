@@ -63,9 +63,7 @@ export default function RootLayout({
               </nav>
             </div>
           </header>
-          <main className="flex-grow container mx-auto p-4">
-            {children}
-          </main>
+          <main className="flex-grow container mx-auto p-4">{children}</main>
           <footer className="bg-slate-800 text-white p-4">
             <div className="container mx-auto text-center">
               <p>インターン課題 - ユーザー管理アプリ</p>

@@ -37,15 +37,15 @@ class InitDatabase extends Command
         }
 
         $this->info('シードデータを投入します（1,000件のユーザーデータ）...');
-        
+
         Artisan::call('db:seed', [
             '--force' => true,
-            '--class' => 'Database\\Seeders\\TestDatabaseSeeder'
+            '--class' => 'Database\\Seeders\\TestDatabaseSeeder',
         ]);
-        
+
         $this->info('テスト用データベースの初期化が完了しました！');
         $this->info('アプリケーションの準備ができました。');
-        
+
         return Command::SUCCESS;
     }
 }

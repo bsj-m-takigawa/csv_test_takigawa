@@ -19,27 +19,28 @@ class CsvController extends Controller
      */
     public function import(Request $request)
     {
-        if (!$request->hasFile('csv_file')) {
+        if (! $request->hasFile('csv_file')) {
             return response()->json(['error' => 'ファイルエラー'], 400);
         }
 
         $file = $request->file('csv_file');
-        
+
         $path = $file->store('temp');
         $fullPath = Storage::path($path);
 
         $handle = fopen($fullPath, 'r');
-        if (!$handle) {
+        if (! $handle) {
             return response()->json(['error' => 'ファイル読み込みエラー'], 500);
         }
-        
+
         $header = fgetcsv($handle);
-        if (!$header) {
+        if (! $header) {
             fclose($handle);
             Storage::delete($path);
+
             return response()->json(['error' => 'CSVフォーマットエラー'], 400);
         }
-        
+
         $headerMapping = [
             'ID' => 'id',
             '名前' => 'name',
@@ -56,28 +57,28 @@ class CsvController extends Controller
 
         $importedCount = 0;
         $lineNumber = 1; // ヘッダー行
-        
+
         try {
             while (($data = fgetcsv($handle)) !== false) {
                 $lineNumber++;
-                
+
                 $rawUserData = array_combine($header, $data);
-                
+
                 $userData = [];
                 foreach ($rawUserData as $key => $value) {
                     $normKey = $headerMapping[$key] ?? $key;
                     $userData[$normKey] = $value;
                 }
-                
-                if (isset($userData['id']) && !empty($userData['id'])) {
+
+                if (isset($userData['id']) && ! empty($userData['id'])) {
                     $user = User::find($userData['id']);
-                    if (!$user) {
-                        $user = new User();
+                    if (! $user) {
+                        $user = new User;
                     }
                 } else {
-                    $user = new User();
+                    $user = new User;
                 }
-                
+
                 $user->name = $userData['name'] ?? '';
                 $user->email = $userData['email'] ?? '';
                 $user->password = isset($userData['password']) ? bcrypt($userData['password']) : $user->password ?? bcrypt('password123');
@@ -89,20 +90,21 @@ class CsvController extends Controller
                 $user->notes = $userData['notes'] ?? null;
                 $user->profile_image = $userData['profile_image'] ?? null;
                 $user->points = $userData['points'] ?? 0;
-                
+
                 $user->save();
                 $importedCount++;
             }
-            
+
             fclose($handle);
             Storage::delete($path);
-            
+
             return response()->json([
-                'message' => $importedCount . '件のユーザーデータをインポートしました。'
+                'message' => $importedCount.'件のユーザーデータをインポートしました。',
             ]);
-            
+
         } catch (\Exception $e) {
-            Log::error('CSVインポートエラー: 行' . $lineNumber . ' - ' . $e->getMessage());
+            Log::error('CSVインポートエラー: 行'.$lineNumber.' - '.$e->getMessage());
+
             return response()->json(['error' => '不明なエラーが発生しました。'], 500);
         }
     }
@@ -119,38 +121,37 @@ class CsvController extends Controller
     public function export()
     {
         $userIds = DB::table('users')->select('id')->get();
-        
-        $filename = 'users_' . date('YmdHis') . '.csv';
+
+        $filename = 'users_'.date('YmdHis').'.csv';
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
-        
+
         $content = "ID,名前,メールアドレス,電話番号,住所,生年月日,性別,会員状態,メモ,プロフィール画像,ポイント,最終ログイン\n";
-        
+
         foreach ($userIds as $userId) {
             $user = User::find($userId->id);
-            
-            $content .= $user->id . ',' . 
-                   $user->name . ',' . 
-                   $user->email . ',' . 
-                   $user->phone_number . ',' . 
-                   $user->address . ',' . 
-                   $user->birth_date . ',' . 
-                   $user->gender . ',' . 
-                   $user->membership_status . ',' . 
-                   $user->notes . ',' .  // 改行やカンマを含む可能性あり
-                   $user->profile_image . ',' . 
-                   $user->points . ',' . 
-                   $user->last_login_at . "\n";
+
+            $content .= $user->id.','.
+                   $user->name.','.
+                   $user->email.','.
+                   $user->phone_number.','.
+                   $user->address.','.
+                   $user->birth_date.','.
+                   $user->gender.','.
+                   $user->membership_status.','.
+                   $user->notes.','.  // 改行やカンマを含む可能性あり
+                   $user->profile_image.','.
+                   $user->points.','.
+                   $user->last_login_at."\n";
         }
-        
+
         $tempFile = storage_path('app/temp_export.csv');
         file_put_contents($tempFile, $content);
         $content = file_get_contents($tempFile);
         unlink($tempFile);
-        
+
         return response($content, 200, $headers);
     }
-
 }
