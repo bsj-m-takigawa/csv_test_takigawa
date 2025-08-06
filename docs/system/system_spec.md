@@ -1,44 +1,44 @@
-# System Specification
+# システム仕様書
 
-## 1. Overview
-- Stack: Frontend Next.js(App Router, TS) / Backend Laravel 10 / MySQL
-- Domains: Users CRUD, CSV Import/Export, Pagination
-- Environments: local, staging, production
+## 1. 概要
+- 構成: フロントエンド Next.js(App Router, TS) / バックエンド Laravel 10 / MySQL
+- 対象ドメイン: ユーザーCRUD、CSVインポート/エクスポート、ページネーション
+- 環境: local / staging / production
 
-## 2. Functional Requirements
-### 2.1 Users
-- Create/Read/Update/Delete
-- List with server-side pagination, sort, filter (name/email/status)
-- Detail view
-- Admin-only: future points operations (separate API)
+## 2. 機能要件
+### 2.1 ユーザー
+- 作成/取得/更新/削除
+- 一覧: サーバサイドページネーション＋ソート＋フィルタ(名前/メール/ステータス)
+- 詳細表示
+- 管理者限定: 将来的にポイント操作(別API)
 
 ### 2.2 CSV
-- Import: validate per row, transactional batches, error rows CSV export
-- Export: chunked streaming, stable header order, field normalization
+- インポート: 行単位バリデーション、トランザクションバッチ、エラー行CSV出力
+- エクスポート: チャンク分割のストリーミング、ヘッダ固定、フィールド正規化
 
 ## 3. API
-- Base: /api
-- Auth: (future) Sanctum or token
-- Error spec: 4xx/5xx => {message, errors?}
-- Users endpoints: see ./api/users.md
+- ベース: /api
+- 認証: 将来導入(Sanctum もしくはトークン)
+- エラー形式: 4xx/5xx => {message, errors?}
+- ユーザーAPI: ./api/users.md を参照
 
-## 4. Non-Functional
-- Security: no raw SQL, validation on all inputs, mass assignment protection, CSRF, CORS
-- Performance: pagination, chunked export, queued import
-- Reliability: transactions for bulk ops, idempotency for imports
-- Observability: structured logs, audit for critical ops
+## 4. 非機能要件
+- セキュリティ: 生SQL禁止、全入力にバリデーション、マスアサイン防止、CSRF、CORS
+- 性能: ページネーション、分割エクスポート、キュー化インポート
+- 信頼性: まとめ処理はトランザクション、インポートの冪等性
+- 可観測性: 構造化ログ、重要操作の監査
 
-## 5. Operations
-- Envs via .env, secrets not logged
-- DB migrations/seeds
-- CI: lint/typecheck/build (FE), phpunit/pint (BE)
+## 5. 運用
+- 環境変数は .env、秘密はログ出力しない
+- DB マイグレーション/シード
+- CI: フロント lint/typecheck/build、バックエンド phpunit/pint
 
-## 6. UX Guidelines
-- Field-level validation, loading/empty/error states
-- Accessible components, keyboard operable, contrast AA
+## 6. UX ガイドライン
+- フィールド単位のバリデーション、Loading/Empty/Error 状態
+- アクセシブルなコンポーネント、キーボード操作、コントラストAA
 
-## 7. Roadmap
-- Admin points API
-- OpenAPI generation + typed client
-- Background import queue
-- Filters/sorting in list API
+## 7. ロードマップ
+- 管理者ポイントAPI
+- OpenAPI生成＋型付きクライアント
+- インポートのバックグラウンドキュー
+- 一覧APIのフィルタ/ソート
