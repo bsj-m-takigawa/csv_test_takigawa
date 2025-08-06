@@ -2,6 +2,8 @@
 
 - system/
   - system_spec.md: 全体仕様
+  - frontend-architecture.md: フロントエンドアーキテクチャ
+  - frontend-performance-optimization.md: フロントエンドパフォーマンス最適化ガイド
   - api/
     - users.md: ユーザーAPI
     - users_basic_spec.md: ユーザーAPI基本仕様
@@ -16,5 +18,7 @@
   - performance_issues.md: パフォーマンス問題
 - reports/
   - sql_injection_fix_evidence.md: SQLインジェクション対策エビデンス
+- issues/
+  - issue-24-frontend-optimization.md: フロントエンド最適化 (完了)
 - backlog/
   - issues.md: 改善課題/未対応項目一覧

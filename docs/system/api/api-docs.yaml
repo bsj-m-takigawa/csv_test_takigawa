@@ -12,18 +12,31 @@ paths:
         - in: query
           name: page
           schema: { type: integer, minimum: 1 }
+          description: ページ番号
         - in: query
           name: per_page
-          schema: { type: integer, minimum: 1, maximum: 100 }
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+          description: 1ページあたりの件数
         - in: query
           name: sort
-          schema: { type: string, enum: [name,email,membership_status,created_at] }
+          schema: { type: string, enum: [name,email,membership_status,created_at,updated_at], default: created_at }
+          description: ソート対象フィールド
         - in: query
           name: order
-          schema: { type: string, enum: [asc,desc] }
+          schema: { type: string, enum: [asc,desc], default: desc }
+          description: ソート順
         - in: query
           name: q
+          schema: { type: string, maxLength: 255 }
+          description: 検索クエリ（名前、メール、電話番号で部分一致検索）
+        - in: query
+          name: status
           schema: { type: string }
+          description: ステータスフィルター（カンマ区切りで複数指定可能 例：active,pending）
+        - in: query
+          name: created
+          schema: { type: string, enum: [today,week,month,year] }
+          description: 作成日フィルター
       responses:
         '200':
           description: OK
@@ -80,7 +93,29 @@ paths:
       responses:
         '200': { description: Deleted }
         '404': { description: Not Found }
-  /csv/import:
+  /users/status-counts:
+    get:
+      summary: Get user counts by status
+      description: 各ステータスのユーザー数を取得
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string, maxLength: 255 }
+          description: 検索クエリ（検索条件下でのカウント）
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  active: { type: integer, description: アクティブユーザー数 }
+                  inactive: { type: integer, description: 非アクティブユーザー数 }
+                  pending: { type: integer, description: 保留中ユーザー数 }
+                  expired: { type: integer, description: 期限切れユーザー数 }
+                  total: { type: integer, description: 合計ユーザー数 }
+  /users/import:
     post:
       summary: Import users by CSV
       requestBody:
@@ -96,7 +131,7 @@ paths:
       responses:
         '200': { description: Accepted }
         '400': { description: Bad CSV }
-  /csv/export:
+  /users/export:
     get:
       summary: Export users as CSV
       responses:
@@ -161,7 +196,143 @@ components:
         meta:
           type: object
           properties:
-            total: { type: integer }
-            page: { type: integer }
-            per_page: { type: integer }
-            pages: { type: integer }
+            total: { type: integer, description: 合計件数 }
+            current_page: { type: integer, description: 現在のページ番号 }
+            per_page: { type: integer, description: 1ページあたりの件数 }
+            last_page: { type: integer, description: 最終ページ番号 }
+            from: { type: integer, nullable: true, description: 表示開始位置 }
+            to: { type: integer, nullable: true, description: 表示終了位置 }
+        links:
+          type: object
+          properties:
+            first: { type: string, format: uri, description: 最初のページURL }
+            last: { type: string, format: uri, description: 最後のページURL }
+            prev: { type: string, format: uri, nullable: true, description: 前のページURL }
+            next: { type: string, format: uri, nullable: true, description: 次のページURL }
+  
+  /users/bulk-delete:
+    post:
+      summary: Bulk delete users
+      description: 複数ユーザーの一括削除（個別選択・全件選択・条件選択に対応）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_ids:
+                  type: array
+                  items: { type: integer }
+                  description: 削除するユーザーIDのリスト（個別選択の場合）
+                select_all:
+                  type: boolean
+                  description: 全件選択または条件選択の場合はtrue
+                select_type:
+                  type: string
+                  enum: [all, filtered]
+                  description: 全件選択(all)または条件選択(filtered)
+                filters:
+                  type: object
+                  description: 条件選択時のフィルター条件
+                  properties:
+                    q: { type: string, description: 検索クエリ }
+                    status: { type: string, description: ステータスフィルター }
+                    created: { type: string, enum: [today,week,month,year], description: 作成日フィルター }
+            examples:
+              individual_selection:
+                summary: 個別選択での削除
+                value:
+                  user_ids: [1, 2, 3]
+              all_selection:
+                summary: 全件削除
+                value:
+                  select_all: true
+                  select_type: all
+              filtered_selection:
+                summary: 条件削除（アクティブユーザーのみ）
+                value:
+                  select_all: true
+                  select_type: filtered
+                  filters:
+                    status: "active"
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string, description: 成功メッセージ }
+                  deleted_count: { type: integer, description: 削除された件数 }
+        '400':
+          description: リクエストエラー
+        '500':
+          description: サーバーエラー
+
+  /users/bulk-export:
+    post:
+      summary: Bulk export users to CSV
+      description: 複数ユーザーのCSV一括エクスポート（個別選択・全件選択・条件選択に対応）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_ids:
+                  type: array
+                  items: { type: integer }
+                  description: エクスポートするユーザーIDのリスト（個別選択の場合）
+                select_all:
+                  type: boolean
+                  description: 全件選択または条件選択の場合はtrue
+                select_type:
+                  type: string
+                  enum: [all, filtered]
+                  description: 全件エクスポート(all)または条件エクスポート(filtered)
+                filters:
+                  type: object
+                  description: 条件選択時のフィルター条件
+                  properties:
+                    q: { type: string, description: 検索クエリ }
+                    status: { type: string, description: ステータスフィルター }
+                    created: { type: string, enum: [today,week,month,year], description: 作成日フィルター }
+            examples:
+              individual_selection:
+                summary: 個別選択でのエクスポート
+                value:
+                  user_ids: [1, 2, 3]
+              all_selection:
+                summary: 全件エクスポート
+                value:
+                  select_all: true
+                  select_type: all
+              filtered_selection:
+                summary: 条件エクスポート（今日登録のユーザーのみ）
+                value:
+                  select_all: true
+                  select_type: filtered
+                  filters:
+                    created: "today"
+      responses:
+        '200':
+          description: CSVファイルダウンロード
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              description: ダウンロードファイル名
+              schema:
+                type: string
+                example: attachment; filename="selected_users_2025-08-06_143022.csv"
+        '400':
+          description: リクエストエラー
+        '500':
+          description: サーバーエラー

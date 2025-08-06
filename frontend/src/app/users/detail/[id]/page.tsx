@@ -4,10 +4,10 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { fetchUser, User } from "../../../../lib/api/users";
+import { Button, Card, CardHeader, CardTitle, CardContent, Alert, Badge } from "@/components/ui";
 
 export default function UserDetailPage() {
   const params = useParams();
-
   const userId = Number(params.id);
 
   const [user, setUser] = useState<User | null>(null);
@@ -34,157 +34,280 @@ export default function UserDetailPage() {
     }
   }, [userId]);
 
-  const MembershipStatusChip = ({ status }: { status: string }) => {
-    const label =
-      status === "active"
-        ? "有効"
-        : status === "inactive"
-          ? "無効"
-          : status === "expired"
-            ? "期限切れ"
-            : "保留中";
-    return (
-      <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-700">
-        {label}
-      </span>
-    );
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return "-";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('ja-JP', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  const formatDateTime = (dateString: string | undefined) => {
+    if (!dateString) return "-";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString('ja-JP', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  const getGenderLabel = (gender: string | undefined) => {
+    switch (gender) {
+      case 'male': return '男性';
+      case 'female': return '女性';
+      case 'other': return 'その他';
+      default: return '-';
+    }
+  };
+
+  const getMembershipStatusBadge = (status: string | undefined) => {
+    switch (status) {
+      case 'active':
+        return <Badge variant="success">アクティブ</Badge>;
+      case 'inactive':
+        return <Badge variant="default">非アクティブ</Badge>;
+      case 'pending':
+        return <Badge variant="warning">保留中</Badge>;
+      case 'expired':
+        return <Badge variant="danger">期限切れ</Badge>;
+      default:
+        return <Badge variant="default">不明</Badge>;
+    }
   };
 
   if (loading) {
-    return <div className="text-center py-10">読み込み中...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex items-center gap-3">
+          <svg className="animate-spin w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span className="text-gray-600 dark:text-gray-400">ユーザー情報を読み込み中...</span>
+        </div>
+      </div>
+    );
   }
 
   if (error || !user) {
     return (
-      <div className="text-center py-10 text-red-500">
-        {error || "ユーザーが見つかりません"}
+      <div className="max-w-4xl mx-auto space-y-6">
+        <Alert variant="error">
+          <div className="flex items-start gap-3">
+            <svg className="h-5 w-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            <div className="text-sm">
+              <p className="font-medium mb-1">データ取得エラー</p>
+              <p>{error || "ユーザーが見つかりません"}</p>
+            </div>
+          </div>
+        </Alert>
+        <div className="text-center">
+          <Link href="/users/list">
+            <Button variant="primary">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              一覧に戻る
+            </Button>
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">ユーザー詳細</h1>
-        <div className="space-x-2">
-          <Link
-            href={`/users/edit/${user.id}`}
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-          >
-            編集
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* ヘッダー */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-light text-gray-900 dark:text-white">ユーザー詳細</h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            ID: {user.id} の詳細情報
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Link href={`/users/edit/${user.id}`}>
+            <Button variant="primary" size="sm">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              編集
+            </Button>
           </Link>
-          <Link
-            href={`/users/delete/${user.id}`}
-            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-          >
-            削除
+          <Link href={`/users/delete/${user.id}`}>
+            <Button variant="danger" size="sm">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              削除
+            </Button>
           </Link>
-          <Link
-            href="/users/list"
-            className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-          >
-            一覧に戻る
+          <Link href="/users/list">
+            <Button variant="outline" size="sm">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              一覧に戻る
+            </Button>
           </Link>
         </div>
       </div>
 
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-        <div className="px-4 py-5 sm:px-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">
-            {user.name}
-          </h3>
-          <p className="mt-1 max-w-2xl text-sm text-gray-500">ID: {user.id}</p>
-        </div>
-        <div className="border-t border-gray-200">
-          <dl>
-            <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500">名前</dt>
-              <dd
-                className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2"
-                dangerouslySetInnerHTML={{ __html: user.name }}
-              ></dd>
+      {/* ユーザー基本情報カード */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl">{user.name}</CardTitle>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{user.email}</p>
             </div>
-            <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500">
-                メールアドレス
-              </dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {user.email}
-              </dd>
+            <div className="flex items-center gap-2">
+              {getMembershipStatusBadge(user.membership_status)}
             </div>
-            <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500">電話番号</dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {user.phone_number || "-"}
-              </dd>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">電話番号</dt>
+                <dd className="text-gray-900 dark:text-white">
+                  {user.phone_number ? (
+                    <a href={`tel:${user.phone_number}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+                      {user.phone_number}
+                    </a>
+                  ) : (
+                    "-"
+                  )}
+                </dd>
+              </div>
+              
+              <div>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">生年月日</dt>
+                <dd className="text-gray-900 dark:text-white">{formatDate(user.birth_date)}</dd>
+              </div>
+              
+              <div>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">性別</dt>
+                <dd className="text-gray-900 dark:text-white">{getGenderLabel(user.gender)}</dd>
+              </div>
             </div>
-            <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500">住所</dt>
-              <dd
-                className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2"
-                dangerouslySetInnerHTML={{ __html: user.address || "-" }}
-              ></dd>
+            
+            <div className="space-y-4">
+              <div>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">ポイント</dt>
+                <dd className="text-gray-900 dark:text-white">
+                  <span className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    {user.points?.toLocaleString() || 0}
+                  </span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">pt</span>
+                </dd>
+              </div>
+              
+              <div>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">最終ログイン</dt>
+                <dd className="text-gray-900 dark:text-white">
+                  {user.last_login_at ? (
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {formatDateTime(user.last_login_at)}
+                    </div>
+                  ) : (
+                    "-"
+                  )}
+                </dd>
+              </div>
+              
+              <div>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">登録日</dt>
+                <dd className="text-gray-900 dark:text-white">{formatDateTime(user.created_at)}</dd>
+              </div>
             </div>
-            <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500">生年月日</dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {user.birth_date || "-"}
-              </dd>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 住所情報カード */}
+      {user.address && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              住所
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-900 dark:text-white">{user.address}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* メモ・備考カード */}
+      {user.notes && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              メモ・備考
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+              <p className="text-gray-900 dark:text-white whitespace-pre-wrap">{user.notes}</p>
             </div>
-            <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500">性別</dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {user.gender || "-"}
-              </dd>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* システム情報カード */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            システム情報
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div>
+              <dt className="text-gray-500 dark:text-gray-400 mb-1">ユーザーID</dt>
+              <dd className="font-mono text-gray-900 dark:text-white">{user.id}</dd>
             </div>
-            <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500">会員状態</dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                <MembershipStatusChip
-                  status={user.membership_status || "pending"}
-                />
-              </dd>
+            <div>
+              <dt className="text-gray-500 dark:text-gray-400 mb-1">作成日時</dt>
+              <dd className="text-gray-900 dark:text-white">{formatDateTime(user.created_at)}</dd>
             </div>
-            <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500">ポイント</dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {user.points || 0}
-              </dd>
+            <div>
+              <dt className="text-gray-500 dark:text-gray-400 mb-1">最終更新</dt>
+              <dd className="text-gray-900 dark:text-white">{formatDateTime(user.updated_at)}</dd>
             </div>
-            <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500">
-                最終ログイン
-              </dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {user.last_login_at || "-"}
-              </dd>
-            </div>
-            <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500">メモ</dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {/* 意図的にXSS脆弱性を持たせる - scriptタグが実行されるように修正 */}
-                <div
-                  id="notes-container"
-                  dangerouslySetInnerHTML={{ __html: user.notes || "-" }}
-                ></div>
-                <script
-                  dangerouslySetInnerHTML={{
-                    __html: `
-                  setTimeout(() => {
-                    const notesContainer = document.getElementById('notes-container');
-                    if (notesContainer) {
-                      const notesContent = notesContainer.innerHTML;
-                      notesContainer.innerHTML = notesContent;
-                    }
-                  }, 100);
-                `,
-                  }}
-                ></script>
-              </dd>
-            </div>
-          </dl>
-        </div>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -19,6 +19,18 @@ services:
     networks:
       - internship-challenge-network
 
+  redis:
+    image: redis:7-alpine
+    container_name: internship-challenge-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - internship-challenge-network
+    command: redis-server --appendonly yes
+
   backend:
     build:
       context: ./backend
@@ -32,6 +44,7 @@ services:
       - "8000:8000"
     depends_on:
       - db
+      - redis
     networks:
       - internship-challenge-network
     command: >
@@ -65,4 +78,6 @@ networks:
 
 volumes:
   mysql-data:
+    driver: local
+  redis-data:
     driver: local
