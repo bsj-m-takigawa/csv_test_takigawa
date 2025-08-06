@@ -1,0 +1,167 @@
+openapi: 3.0.3
+info:
+  title: CSV Horizon API
+  version: 0.1.0
+servers:
+  - url: http://localhost:8000/api
+paths:
+  /users:
+    get:
+      summary: List users (paginated)
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: per_page
+          schema: { type: integer, minimum: 1, maximum: 100 }
+        - in: query
+          name: sort
+          schema: { type: string, enum: [name,email,membership_status,created_at] }
+        - in: query
+          name: order
+          schema: { type: string, enum: [asc,desc] }
+        - in: query
+          name: q
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserList'
+    post:
+      summary: Create user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } }
+        '422': { description: Validation error }
+  /users/{id}:
+    get:
+      summary: Get user
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } }
+        '404': { description: Not Found }
+    put:
+      summary: Update user
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } }
+        '404': { description: Not Found }
+        '422': { description: Validation error }
+    delete:
+      summary: Delete user
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Deleted }
+        '404': { description: Not Found }
+  /csv/import:
+    post:
+      summary: Import users by CSV
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                csv_file:
+                  type: string
+                  format: binary
+      responses:
+        '200': { description: Accepted }
+        '400': { description: Bad CSV }
+  /csv/export:
+    get:
+      summary: Export users as CSV
+      responses:
+        '200':
+          description: CSV
+          content:
+            text/csv: { schema: { type: string, format: binary } }
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string, format: email }
+        phone_number: { type: string, nullable: true }
+        address: { type: string, nullable: true }
+        birth_date: { type: string, format: date, nullable: true }
+        gender: { type: string, enum: [male,female,other], nullable: true }
+        membership_status: { type: string, enum: [active,inactive,pending,expired], nullable: true }
+        notes: { type: string, nullable: true }
+        profile_image: { type: string, format: uri, nullable: true }
+        points: { type: integer }
+        last_login_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    UserCreate:
+      type: object
+      required: [name,email,password,password_confirmation]
+      properties:
+        name: { type: string, maxLength: 255 }
+        email: { type: string, format: email, maxLength: 255 }
+        password: { type: string, minLength: 8 }
+        password_confirmation: { type: string, minLength: 8 }
+        phone_number: { type: string, maxLength: 20 }
+        address: { type: string, maxLength: 255 }
+        birth_date: { type: string, format: date }
+        gender: { type: string, enum: [male,female,other] }
+        membership_status: { type: string, enum: [active,inactive,pending,expired] }
+        notes: { type: string, maxLength: 2000 }
+        profile_image: { type: string, format: uri }
+    UserUpdate:
+      type: object
+      properties:
+        name: { type: string, maxLength: 255 }
+        email: { type: string, format: email, maxLength: 255 }
+        password: { type: string, minLength: 8 }
+        password_confirmation: { type: string, minLength: 8 }
+        phone_number: { type: string, maxLength: 20 }
+        address: { type: string, maxLength: 255 }
+        birth_date: { type: string, format: date }
+        gender: { type: string, enum: [male,female,other] }
+        membership_status: { type: string, enum: [active,inactive,pending,expired] }
+        notes: { type: string, maxLength: 2000 }
+        profile_image: { type: string, format: uri }
+    UserList:
+      type: object
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/User' }
+        meta:
+          type: object
+          properties:
+            total: { type: integer }
+            page: { type: integer }
+            per_page: { type: integer }
+            pages: { type: integer }
