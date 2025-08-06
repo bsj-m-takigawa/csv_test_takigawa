@@ -1,14 +1,14 @@
-# UX Guidelines
+# UX ガイドライン
 
-## Forms
-- Show field-level errors; validate on blur and on submit
-- Provide helper text for formats (email, YYYY-MM-DD)
-- Disable submit while pending; show success/error toasts
+## フォーム
+- フィールド単位でエラー表示。blur/submit時に検証
+- 書式のヘルプテキストを表示（email, YYYY-MM-DD）
+- 送信中はボタン無効化。成功/失敗はトースト通知
 
-## Lists
-- Server pagination; page size selector; preserve query in URL
-- Loading/empty/error states; sticky header
+## 一覧
+- サーバサイドページネーション。ページサイズ選択。URLにクエリ保持
+- Loading/Empty/Error 状態を用意。ヘッダは固定
 
-## Accessibility
-- Labels tied to inputs; aria-live for async messages
-- Keyboard navigable components; focus ring visible; contrast AA
+## アクセシビリティ
+- inputにlabelを紐付け。非同期メッセージはaria-live
+- キーボード操作可能、フォーカスリング表示、コントラストAA
