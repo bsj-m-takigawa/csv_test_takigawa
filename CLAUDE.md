@@ -96,7 +96,7 @@ docker compose exec backend bash    # バックエンドコンテナに入る
 - **APIレスポンス圧縮**: gzip圧縮で85-88%データサイズ削減
 - **Redis API キャッシュ**: 5分間TTLでAPIレスポンス高速化
 - **サーバーサイドページネーション**: ユーザー一覧の効率的な表示
-- **チャンク分割CSVエクスポート**: メモリ効率の最適化
+- **高速CSVエクスポート**: チャンク分割ストリーミングで100万件規模も高速処理
 - **データベースインデックス**: 頻繁クエリフィールドの高速化
 - **バルクトランザクション**: バッチ処理でパフォーマンス向上
 
@@ -126,7 +126,7 @@ docker compose exec backend bash    # バックエンドコンテナに入る
 #### CSV操作
 - `POST /users/import` - CSVインポート (multipart/form-data)
 - `POST /users/check-duplicates` - CSVファイルの重複チェック
-- `GET /users/export` - CSVエクスポート (blob返却)
+- `GET /users/export` - 高速CSVエクスポート（ストリーミング処理、100万件対応）
 - `GET /users/sample-csv` - サンプルCSVテンプレートダウンロード
 
 #### バルク操作

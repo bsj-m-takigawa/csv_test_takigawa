@@ -118,6 +118,7 @@ paths:
   /users/import:
     post:
       summary: Import users by CSV
+      description: CSVファイルからユーザーを一括インポート。行単位バリデーション、トランザクションバッチ処理、エラーファイル生成対応。
       requestBody:
         required: true
         content:
@@ -128,17 +129,43 @@ paths:
                 csv_file:
                   type: string
                   format: binary
+                  description: アップロードするCSVファイル
       responses:
-        '200': { description: Accepted }
-        '400': { description: Bad CSV }
+        '200': 
+          description: インポート成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  imported_count: { type: integer, description: インポートされた件数 }
+                  error_count: { type: integer, description: エラー件数 }
+                  error_file_url: { type: string, nullable: true, description: エラーファイルURL }
+        '400': { description: ファイル形式エラーまたはバリデーションエラー }
+        '413': { description: ファイルサイズ超過 }
+        '422': { description: CSVデータバリデーションエラー }
   /users/export:
     get:
-      summary: Export users as CSV
+      summary: Export users as CSV (high-performance streaming)
+      description: 全ユーザーをCSV形式でエクスポート。チャンク処理とストリーミングレスポンスにより100万件規模でも高速処理。
       responses:
         '200':
-          description: CSV
+          description: CSVファイルダウンロード
           content:
             text/csv: { schema: { type: string, format: binary } }
+          headers:
+            Content-Disposition:
+              description: ダウンロードファイル名
+              schema:
+                type: string
+                example: "attachment; filename=\"users_export_2025-08-07.csv\""
+            Content-Type:
+              description: CSVコンテンツタイプ
+              schema:
+                type: string
+                example: "text/csv; charset=UTF-8"
 components:
   schemas:
     User:
