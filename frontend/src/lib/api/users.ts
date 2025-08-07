@@ -29,7 +29,7 @@ async function apiFetch(url: string, options: RequestInit = {}) {
 
   if (!response.ok) {
     const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
-    (error as any).response = {
+    (error as Error & { response?: { status: number; data: string | null } }).response = {
       status: response.status,
       data: await response.text().catch(() => null),
     };
@@ -130,7 +130,7 @@ export const importUsers = async (file: File, importStrategy: 'create' | 'update
     if (!response.ok) {
       const errorText = await response.text().catch(() => null);
       const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
-      (error as any).response = {
+      (error as Error & { response?: { status: number; data: string | null } }).response = {
         status: response.status,
         data: errorText,
       };
@@ -138,23 +138,27 @@ export const importUsers = async (file: File, importStrategy: 'create' | 'update
     }
 
     return response.json();
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error importing users:", error);
     
     // 詳細エラー情報をログ出力
-    if (error.response) {
-      console.error("Response status:", error.response.status);
-      console.error("Response data:", error.response.data);
+    if (error && typeof error === 'object' && 'response' in error) {
+      const errorWithResponse = error as { response?: { status?: number; data?: unknown } };
+      console.error("Response status:", errorWithResponse.response?.status);
+      console.error("Response data:", errorWithResponse.response?.data);
+      
+      // エラーレスポンスに詳細情報を含める
+      const enhancedError = {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        details: errorWithResponse.response?.data || null,
+        status: errorWithResponse.response?.status || null,
+        response: errorWithResponse.response
+      };
+      
+      throw enhancedError;
     }
     
-    // エラーレスポンスに詳細情報を含める
-    const enhancedError = {
-      ...error,
-      details: error.response?.data || null,
-      status: error.response?.status || null
-    };
-    
-    throw enhancedError;
+    throw error;
   }
 };
 
@@ -288,7 +292,7 @@ export const checkDuplicates = async (file: File) => {
     if (!response.ok) {
       const errorText = await response.text().catch(() => null);
       const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
-      (error as any).response = {
+      (error as Error & { response?: { status: number; data: string | null } }).response = {
         status: response.status,
         data: errorText,
       };
@@ -296,21 +300,25 @@ export const checkDuplicates = async (file: File) => {
     }
 
     return response.json();
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error checking duplicates:", error);
     
-    if (error.response) {
-      console.error("Response status:", error.response.status);
-      console.error("Response data:", error.response.data);
+    if (error && typeof error === 'object' && 'response' in error) {
+      const errorWithResponse = error as { response?: { status?: number; data?: unknown } };
+      console.error("Response status:", errorWithResponse.response?.status);
+      console.error("Response data:", errorWithResponse.response?.data);
+      
+      const enhancedError = {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        details: errorWithResponse.response?.data || null,
+        status: errorWithResponse.response?.status || null,
+        response: errorWithResponse.response
+      };
+      
+      throw enhancedError;
     }
     
-    const enhancedError = {
-      ...error,
-      details: error.response?.data || null,
-      status: error.response?.status || null
-    };
-    
-    throw enhancedError;
+    throw error;
   }
 };
 

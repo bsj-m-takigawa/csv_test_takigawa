@@ -38,14 +38,7 @@ export default function ExportUsersPage() {
       setSuccess(null);
       setExportStats(null);
 
-      // エクスポート開始時刻を記録
-      const startTime = Date.now();
-      
       await exportUsers();
-      
-      // エクスポート完了後の統計情報（仮想的）
-      const endTime = Date.now();
-      const processingTime = endTime - startTime;
       
       setExportStats({
         timestamp: new Date().toLocaleString('ja-JP'),
@@ -302,7 +295,7 @@ export default function ExportUsersPage() {
                 <li>• UTF-8エンコーディング（BOM付き）</li>
                 <li>• Excel対応形式</li>
                 <li>• 文字区切り：カンマ（,）</li>
-                <li>• 文字囲み：ダブルクォート（"）</li>
+                <li>• 文字囲み：ダブルクォート（&quot;）</li>
               </ul>
             </div>
             <div className="space-y-2">

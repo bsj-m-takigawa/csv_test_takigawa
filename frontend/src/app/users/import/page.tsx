@@ -61,7 +61,7 @@ interface ImportResult {
   errors?: Array<{
     line: number;
     error: string;
-    data: any;
+    data: unknown;
   }>;
 }
 
@@ -125,7 +125,7 @@ export default function ImportUsersPage() {
   const [showDetails, setShowDetails] = useState<'imported' | 'updated' | 'skipped' | null>(null);
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
   const [duplicateAnalysis, setDuplicateAnalysis] = useState<DuplicateAnalysis | null>(null);
-  const [duplicateDetails, setDuplicateDetails] = useState<DuplicateDetails | null>(null);
+  const [, setDuplicateDetails] = useState<DuplicateDetails | null>(null);
   const [checkingDuplicates, setCheckingDuplicates] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -240,7 +240,7 @@ export default function ImportUsersPage() {
             isValid: errors.length === 0,
             errors
           });
-        } catch (error) {
+        } catch {
           reject(new Error('CSVファイルの解析中にエラーが発生しました。'));
         }
       };
@@ -254,8 +254,9 @@ export default function ImportUsersPage() {
     try {
       const previewData = await parseCSVFile(selectedFile);
       setCsvPreview(previewData);
-    } catch (err: any) {
-      setError(err.message || "ファイル分析中にエラーが発生しました。");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "ファイル分析中にエラーが発生しました。";
+      setError(message);
     } finally {
       setIsAnalyzing(false);
     }
@@ -277,7 +278,7 @@ export default function ImportUsersPage() {
       
       // Step3に進む
       setCurrentStep(3);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Duplicate check error:", err);
       setError("重複チェック中にエラーが発生しました。ネットワーク接続を確認してください。");
     } finally {
@@ -365,14 +366,17 @@ export default function ImportUsersPage() {
       }
 
       setCurrentStep(4);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Import error:", err);
       
-      if (err.response && err.response.status) {
-        if (err.response.status === 422) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const errorWithResponse = err as { response?: { status?: number } };
+        if (errorWithResponse.response?.status === 422) {
           setError("入力データに問題があります。CSVファイルの内容を確認してください。");
+        } else if (errorWithResponse.response?.status) {
+          setError(`サーバーエラーが発生しました。しばらく時間をおいて再度お試しください。（エラーコード: ${errorWithResponse.response.status}）`);
         } else {
-          setError(`サーバーエラーが発生しました。しばらく時間をおいて再度お試しください。（エラーコード: ${err.response.status}）`);
+          setError("インポート処理中にエラーが発生しました。");
         }
       } else {
         setError("インポート処理中にエラーが発生しました。ネットワーク接続を確認してください。");
@@ -386,7 +390,7 @@ export default function ImportUsersPage() {
     try {
       setDownloadingTemplate(true);
       await downloadSampleCSV();
-    } catch (err) {
+    } catch {
       setError("サンプルファイルのダウンロードに失敗しました。");
     } finally {
       setDownloadingTemplate(false);
