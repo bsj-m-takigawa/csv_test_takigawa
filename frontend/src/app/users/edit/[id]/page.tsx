@@ -4,7 +4,17 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { fetchUser, updateUser, User } from "../../../../lib/api/users";
-import { Button, Input, Card, CardHeader, CardTitle, CardContent, Alert, Select, Textarea } from "@/components/ui";
+import {
+  Button,
+  Input,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Alert,
+  Select,
+  Textarea,
+} from "@/components/ui";
 
 export default function EditUserPage() {
   const params = useParams();
@@ -64,19 +74,19 @@ export default function EditUserPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    
+
     // 生年月日の場合は日付の妥当性をチェック
-    if (name === 'birth_date' && value) {
+    if (name === "birth_date" && value) {
       const inputDate = new Date(value);
       const today = new Date();
-      const minDate = new Date('1900-01-01');
-      
+      const minDate = new Date("1900-01-01");
+
       // 日付が有効範囲外の場合は更新しない
       if (inputDate < minDate || inputDate > today) {
         return;
       }
     }
-    
+
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -92,8 +102,8 @@ export default function EditUserPage() {
     if (formData.birth_date) {
       const inputDate = new Date(formData.birth_date);
       const today = new Date();
-      const minDate = new Date('1900-01-01');
-      
+      const minDate = new Date("1900-01-01");
+
       if (inputDate < minDate || inputDate > today) {
         setError("生年月日は1900年以降、今日までの日付を入力してください。");
         return;
@@ -142,8 +152,19 @@ export default function EditUserPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="flex items-center gap-3">
           <svg className="animate-spin w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            ></circle>
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
           </svg>
           <span className="text-gray-600 dark:text-gray-400">ユーザー情報を読み込み中...</span>
         </div>
@@ -165,8 +186,18 @@ export default function EditUserPage() {
           <Link href={`/users/detail/${userId}`}>
             <Button variant="outline" size="sm">
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
               </svg>
               詳細に戻る
             </Button>
@@ -174,7 +205,12 @@ export default function EditUserPage() {
           <Link href="/users/list">
             <Button variant="outline" size="sm">
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                />
               </svg>
               一覧に戻る
             </Button>
@@ -187,7 +223,11 @@ export default function EditUserPage() {
         <Alert variant="error" onClose={() => setError(null)}>
           <div className="flex items-start gap-3">
             <svg className="h-5 w-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clipRule="evenodd"
+              />
             </svg>
             <div className="text-sm">
               <p className="font-medium mb-1">更新エラー</p>
@@ -285,7 +325,7 @@ export default function EditUserPage() {
                   value={formData.birth_date}
                   onChange={handleChange}
                   min="1900-01-01"
-                  max={new Date().toISOString().split('T')[0]}
+                  max={new Date().toISOString().split("T")[0]}
                   helperText="1900年以降、今日までの日付を選択してください"
                 />
               </div>
@@ -305,7 +345,7 @@ export default function EditUserPage() {
                 />
               </div>
             </div>
-            
+
             {/* 会員状態とポイント */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -372,17 +412,17 @@ export default function EditUserPage() {
             className="flex-1 sm:flex-initial"
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
             </svg>
             {submitting ? "更新中..." : "変更を保存"}
           </Button>
           <Link href={`/users/detail/${userId}`}>
-            <Button
-              variant="outline"
-              size="lg"
-              disabled={submitting}
-              className="w-full sm:w-auto"
-            >
+            <Button variant="outline" size="lg" disabled={submitting} className="w-full sm:w-auto">
               キャンセル
             </Button>
           </Link>

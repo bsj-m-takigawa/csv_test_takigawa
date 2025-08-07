@@ -54,7 +54,9 @@ export default function RootLayout({
                 </p>
                 <div className="flex space-x-6 mt-4 md:mt-0">
                   <span className="text-sm text-gray-600 dark:text-gray-400">v1.0.0</span>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Next.js + Laravel</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Next.js + Laravel
+                  </span>
                 </div>
               </div>
             </div>

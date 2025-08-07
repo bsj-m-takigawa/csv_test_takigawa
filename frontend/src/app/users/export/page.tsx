@@ -16,7 +16,7 @@ import {
   TableRow,
   TableHead,
   TableCell,
-  Badge
+  Badge,
 } from "@/components/ui";
 
 interface ExportStats {
@@ -39,11 +39,11 @@ export default function ExportUsersPage() {
       setExportStats(null);
 
       await exportUsers();
-      
+
       setExportStats({
-        timestamp: new Date().toLocaleString('ja-JP'),
+        timestamp: new Date().toLocaleString("ja-JP"),
       });
-      
+
       setSuccess("エクスポートが完了しました。ダウンロードが開始されます。");
     } catch (err: unknown) {
       console.error("Error exporting users:", err);
@@ -66,7 +66,12 @@ export default function ExportUsersPage() {
         <Link href="/users/list">
           <Button variant="outline">
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
             </svg>
             一覧に戻る
           </Button>
@@ -78,7 +83,11 @@ export default function ExportUsersPage() {
         <Alert variant="error" onClose={() => setError(null)}>
           <div className="flex items-start gap-3">
             <svg className="h-5 w-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clipRule="evenodd"
+              />
             </svg>
             <div className="text-sm">
               <p className="font-medium mb-1">エクスポートエラー</p>
@@ -93,7 +102,11 @@ export default function ExportUsersPage() {
         <Alert variant="success" onClose={() => setSuccess(null)}>
           <div className="flex items-start gap-3">
             <svg className="h-5 w-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clipRule="evenodd"
+              />
             </svg>
             <div className="text-sm">
               <p className="font-medium mb-1">エクスポート完了</p>
@@ -112,8 +125,18 @@ export default function ExportUsersPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg
+              className="w-5 h-5 text-blue-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
             </svg>
             <CardTitle>データエクスポート</CardTitle>
           </div>
@@ -125,9 +148,16 @@ export default function ExportUsersPage() {
             </p>
             <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
-              <span className="text-sm">データ量によってはエクスポートに時間がかかる場合があります</span>
+              <span className="text-sm">
+                データ量によってはエクスポートに時間がかかる場合があります
+              </span>
             </div>
           </div>
 
@@ -142,7 +172,12 @@ export default function ExportUsersPage() {
               className="flex-1 sm:flex-initial"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
               </svg>
               {loading ? "エクスポート中..." : "CSVをダウンロード"}
             </Button>
@@ -153,8 +188,19 @@ export default function ExportUsersPage() {
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
               <div className="flex items-center gap-3">
                 <svg className="animate-spin w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
                 <div className="text-sm">
                   <p className="font-medium text-blue-800 dark:text-blue-200">データを処理中...</p>
@@ -172,10 +218,22 @@ export default function ExportUsersPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg
+              className="w-5 h-5 text-green-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
             </svg>
-            <CardTitle className="text-green-600 dark:text-green-400">エクスポートファイル形式</CardTitle>
+            <CardTitle className="text-green-600 dark:text-green-400">
+              エクスポートファイル形式
+            </CardTitle>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -229,15 +287,25 @@ export default function ExportUsersPage() {
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium">会員状態</TableCell>
-                <TableCell className="text-sm text-gray-500">active/inactive/pending/expired</TableCell>
+                <TableCell className="text-sm text-gray-500">
+                  active/inactive/pending/expired
+                </TableCell>
                 <TableCell className="text-sm">
                   <div className="flex items-center gap-2">
                     アカウント状態
                     <div className="flex gap-1">
-                      <Badge variant="success" size="sm">active</Badge>
-                      <Badge variant="default" size="sm">inactive</Badge>
-                      <Badge variant="warning" size="sm">pending</Badge>
-                      <Badge variant="danger" size="sm">expired</Badge>
+                      <Badge variant="success" size="sm">
+                        active
+                      </Badge>
+                      <Badge variant="default" size="sm">
+                        inactive
+                      </Badge>
+                      <Badge variant="warning" size="sm">
+                        pending
+                      </Badge>
+                      <Badge variant="danger" size="sm">
+                        expired
+                      </Badge>
                     </div>
                   </div>
                 </TableCell>
@@ -281,8 +349,18 @@ export default function ExportUsersPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="w-5 h-5 text-gray-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             <CardTitle className="text-gray-600 dark:text-gray-400">使用上の注意</CardTitle>
           </div>
@@ -308,14 +386,26 @@ export default function ExportUsersPage() {
               </ul>
             </div>
           </div>
-          
+
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mt-4">
             <div className="flex items-start gap-3">
-              <svg className="w-5 h-5 text-yellow-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.856-.833-2.598 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              <svg
+                className="w-5 h-5 text-yellow-500 mt-0.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.856-.833-2.598 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
               </svg>
               <div className="text-sm">
-                <p className="font-medium text-yellow-800 dark:text-yellow-200 mb-1">重要な注意事項</p>
+                <p className="font-medium text-yellow-800 dark:text-yellow-200 mb-1">
+                  重要な注意事項
+                </p>
                 <ul className="text-yellow-700 dark:text-yellow-300 space-y-1">
                   <li>• エクスポートされたデータには個人情報が含まれています</li>
                   <li>• ファイルの取り扱いには十分ご注意ください</li>

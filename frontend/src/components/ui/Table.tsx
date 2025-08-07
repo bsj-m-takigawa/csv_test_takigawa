@@ -1,5 +1,5 @@
-import React from 'react';
-import { cn } from '@/lib/utils';
+import React from "react";
+import { cn } from "@/lib/utils";
 
 interface TableProps extends React.HTMLAttributes<HTMLTableElement> {
   children: React.ReactNode;
@@ -11,10 +11,7 @@ export const Table = React.forwardRef<HTMLTableElement, TableProps>(
       <div className="overflow-x-auto">
         <table
           ref={ref}
-          className={cn(
-            'min-w-full divide-y divide-gray-200 dark:divide-gray-700',
-            className
-          )}
+          className={cn("min-w-full divide-y divide-gray-200 dark:divide-gray-700", className)}
           {...props}
         >
           {children}
@@ -24,7 +21,7 @@ export const Table = React.forwardRef<HTMLTableElement, TableProps>(
   }
 );
 
-Table.displayName = 'Table';
+Table.displayName = "Table";
 
 interface TableHeaderProps extends React.HTMLAttributes<HTMLTableSectionElement> {
   children: React.ReactNode;
@@ -33,18 +30,14 @@ interface TableHeaderProps extends React.HTMLAttributes<HTMLTableSectionElement>
 export const TableHeader = React.forwardRef<HTMLTableSectionElement, TableHeaderProps>(
   ({ className, children, ...props }, ref) => {
     return (
-      <thead
-        ref={ref}
-        className={cn('bg-gray-50 dark:bg-gray-800', className)}
-        {...props}
-      >
+      <thead ref={ref} className={cn("bg-gray-50 dark:bg-gray-800", className)} {...props}>
         {children}
       </thead>
     );
   }
 );
 
-TableHeader.displayName = 'TableHeader';
+TableHeader.displayName = "TableHeader";
 
 interface TableBodyProps extends React.HTMLAttributes<HTMLTableSectionElement> {
   children: React.ReactNode;
@@ -55,7 +48,10 @@ export const TableBody = React.forwardRef<HTMLTableSectionElement, TableBodyProp
     return (
       <tbody
         ref={ref}
-        className={cn('bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700', className)}
+        className={cn(
+          "bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700",
+          className
+        )}
         {...props}
       >
         {children}
@@ -64,7 +60,7 @@ export const TableBody = React.forwardRef<HTMLTableSectionElement, TableBodyProp
   }
 );
 
-TableBody.displayName = 'TableBody';
+TableBody.displayName = "TableBody";
 
 interface TableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
   children: React.ReactNode;
@@ -75,10 +71,7 @@ export const TableRow = React.forwardRef<HTMLTableRowElement, TableRowProps>(
     return (
       <tr
         ref={ref}
-        className={cn(
-          'transition-colors hover:bg-gray-50 dark:hover:bg-gray-800',
-          className
-        )}
+        className={cn("transition-colors hover:bg-gray-50 dark:hover:bg-gray-800", className)}
         {...props}
       >
         {children}
@@ -87,7 +80,7 @@ export const TableRow = React.forwardRef<HTMLTableRowElement, TableRowProps>(
   }
 );
 
-TableRow.displayName = 'TableRow';
+TableRow.displayName = "TableRow";
 
 interface TableHeadProps extends React.ThHTMLAttributes<HTMLTableCellElement> {
   children: React.ReactNode;
@@ -99,7 +92,7 @@ export const TableHead = React.forwardRef<HTMLTableCellElement, TableHeadProps>(
       <th
         ref={ref}
         className={cn(
-          'px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider',
+          "px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider",
           className
         )}
         {...props}
@@ -110,7 +103,7 @@ export const TableHead = React.forwardRef<HTMLTableCellElement, TableHeadProps>(
   }
 );
 
-TableHead.displayName = 'TableHead';
+TableHead.displayName = "TableHead";
 
 interface TableCellProps extends React.TdHTMLAttributes<HTMLTableCellElement> {
   children: React.ReactNode;
@@ -122,7 +115,7 @@ export const TableCell = React.forwardRef<HTMLTableCellElement, TableCellProps>(
       <td
         ref={ref}
         className={cn(
-          'px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100',
+          "px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100",
           className
         )}
         {...props}
@@ -133,4 +126,4 @@ export const TableCell = React.forwardRef<HTMLTableCellElement, TableCellProps>(
   }
 );
 
-TableCell.displayName = 'TableCell';
+TableCell.displayName = "TableCell";

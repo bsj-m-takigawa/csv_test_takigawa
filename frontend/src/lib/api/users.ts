@@ -21,7 +21,7 @@ export interface User {
 async function apiFetch(url: string, options: RequestInit = {}) {
   const response = await fetch(url, {
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...options.headers,
     },
     ...options,
@@ -36,11 +36,11 @@ async function apiFetch(url: string, options: RequestInit = {}) {
     throw error;
   }
 
-  const contentType = response.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
     return response.json();
   }
-  
+
   return response;
 }
 
@@ -63,8 +63,8 @@ export const fetchUsers = async (params?: {
       });
     }
     const queryString = searchParams.toString();
-    const url = `${API_URL}/users${queryString ? `?${queryString}` : ''}`;
-    
+    const url = `${API_URL}/users${queryString ? `?${queryString}` : ""}`;
+
     return await apiFetch(url);
   } catch (error) {
     console.error("Error fetching users:", error);
@@ -84,7 +84,7 @@ export const fetchUser = async (id: number) => {
 export const createUser = async (userData: Record<string, unknown>) => {
   try {
     return await apiFetch(`${API_URL}/users`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(userData),
     });
   } catch (error) {
@@ -96,7 +96,7 @@ export const createUser = async (userData: Record<string, unknown>) => {
 export const updateUser = async (id: number, userData: Partial<User>) => {
   try {
     return await apiFetch(`${API_URL}/users/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(userData),
     });
   } catch (error) {
@@ -108,7 +108,7 @@ export const updateUser = async (id: number, userData: Partial<User>) => {
 export const deleteUser = async (id: number) => {
   try {
     return await apiFetch(`${API_URL}/users/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   } catch (error) {
     console.error(`Error deleting user ${id}:`, error);
@@ -116,14 +116,17 @@ export const deleteUser = async (id: number) => {
   }
 };
 
-export const importUsers = async (file: File, importStrategy: 'create' | 'update' | 'skip' = 'create') => {
+export const importUsers = async (
+  file: File,
+  importStrategy: "create" | "update" | "skip" = "create"
+) => {
   try {
     const formData = new FormData();
     formData.append("csv_file", file);
     formData.append("import_strategy", importStrategy);
 
     const response = await fetch(`${API_URL}/users/import`, {
-      method: 'POST',
+      method: "POST",
       body: formData,
     });
 
@@ -140,24 +143,24 @@ export const importUsers = async (file: File, importStrategy: 'create' | 'update
     return response.json();
   } catch (error) {
     console.error("Error importing users:", error);
-    
+
     // 詳細エラー情報をログ出力
-    if (error && typeof error === 'object' && 'response' in error) {
+    if (error && typeof error === "object" && "response" in error) {
       const errorWithResponse = error as { response?: { status?: number; data?: unknown } };
       console.error("Response status:", errorWithResponse.response?.status);
       console.error("Response data:", errorWithResponse.response?.data);
-      
+
       // エラーレスポンスに詳細情報を含める
       const enhancedError = {
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: error instanceof Error ? error.message : "Unknown error",
         details: errorWithResponse.response?.data || null,
         status: errorWithResponse.response?.status || null,
-        response: errorWithResponse.response
+        response: errorWithResponse.response,
       };
-      
+
       throw enhancedError;
     }
-    
+
     throw error;
   }
 };
@@ -165,7 +168,7 @@ export const importUsers = async (file: File, importStrategy: 'create' | 'update
 export const exportUsers = async () => {
   try {
     const response = await fetch(`${API_URL}/users/export`);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
@@ -190,7 +193,7 @@ export const exportUsers = async () => {
 export interface BulkOperationParams {
   user_ids?: number[];
   select_all?: boolean;
-  select_type?: 'all' | 'filtered';
+  select_type?: "all" | "filtered";
   filters?: {
     q?: string;
     status?: string;
@@ -200,17 +203,22 @@ export interface BulkOperationParams {
 
 export const bulkDeleteUsers = async (params: BulkOperationParams) => {
   try {
+    console.log("Bulk delete params:", params); // デバッグ用
+
     const response = await fetch(`${API_URL}/users/bulk-delete`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(params),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      console.error("Bulk delete validation error:", errorData); // エラー詳細をログ出力
+      throw new Error(
+        errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`
+      );
     }
 
     return response.json();
@@ -223,9 +231,9 @@ export const bulkDeleteUsers = async (params: BulkOperationParams) => {
 export const bulkExportUsers = async (params: BulkOperationParams) => {
   try {
     const response = await fetch(`${API_URL}/users/bulk-export`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(params),
     });
@@ -239,17 +247,17 @@ export const bulkExportUsers = async (params: BulkOperationParams) => {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    
+
     // ファイル名をContent-Dispositionヘッダーから取得（可能な場合）
-    const contentDisposition = response.headers.get('content-disposition');
-    let filename = 'bulk_export.csv';
+    const contentDisposition = response.headers.get("content-disposition");
+    let filename = "bulk_export.csv";
     if (contentDisposition) {
       const matches = contentDisposition.match(/filename="([^"]+)"/);
       if (matches) {
         filename = matches[1];
       }
     }
-    
+
     link.setAttribute("download", filename);
     document.body.appendChild(link);
     link.click();
@@ -263,15 +271,17 @@ export const bulkExportUsers = async (params: BulkOperationParams) => {
   }
 };
 
-export const fetchStatusCounts = async (params?: { q?: string }): Promise<Record<string, number>> => {
+export const fetchStatusCounts = async (params?: {
+  q?: string;
+}): Promise<Record<string, number>> => {
   try {
     const searchParams = new URLSearchParams();
     if (params?.q) {
-      searchParams.append('q', params.q);
+      searchParams.append("q", params.q);
     }
     const queryString = searchParams.toString();
-    const url = `${API_URL}/users/status-counts${queryString ? `?${queryString}` : ''}`;
-    
+    const url = `${API_URL}/users/status-counts${queryString ? `?${queryString}` : ""}`;
+
     return await apiFetch(url);
   } catch (error) {
     console.error("Error fetching status counts:", error);
@@ -285,7 +295,7 @@ export const checkDuplicates = async (file: File) => {
     formData.append("csv_file", file);
 
     const response = await fetch(`${API_URL}/users/check-duplicates`, {
-      method: 'POST',
+      method: "POST",
       body: formData,
     });
 
@@ -302,22 +312,22 @@ export const checkDuplicates = async (file: File) => {
     return response.json();
   } catch (error) {
     console.error("Error checking duplicates:", error);
-    
-    if (error && typeof error === 'object' && 'response' in error) {
+
+    if (error && typeof error === "object" && "response" in error) {
       const errorWithResponse = error as { response?: { status?: number; data?: unknown } };
       console.error("Response status:", errorWithResponse.response?.status);
       console.error("Response data:", errorWithResponse.response?.data);
-      
+
       const enhancedError = {
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: error instanceof Error ? error.message : "Unknown error",
         details: errorWithResponse.response?.data || null,
         status: errorWithResponse.response?.status || null,
-        response: errorWithResponse.response
+        response: errorWithResponse.response,
       };
-      
+
       throw enhancedError;
     }
-    
+
     throw error;
   }
 };
@@ -325,7 +335,7 @@ export const checkDuplicates = async (file: File) => {
 export const downloadSampleCSV = async () => {
   try {
     const response = await fetch(`${API_URL}/users/sample-csv`);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }

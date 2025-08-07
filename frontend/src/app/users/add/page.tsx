@@ -4,7 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createUser } from "../../../lib/api/users";
-import { Button, Input, Card, CardHeader, CardTitle, CardContent, Alert, Select } from "@/components/ui";
+import {
+  Button,
+  Input,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Alert,
+  Select,
+} from "@/components/ui";
 
 export default function AddUserPage() {
   const router = useRouter();
@@ -30,19 +39,19 @@ export default function AddUserPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    
+
     // 生年月日の場合は日付の妥当性をチェック
-    if (name === 'birth_date' && value) {
+    if (name === "birth_date" && value) {
       const inputDate = new Date(value);
       const today = new Date();
-      const minDate = new Date('1900-01-01');
-      
+      const minDate = new Date("1900-01-01");
+
       // 日付が有効範囲外の場合は更新しない
       if (inputDate < minDate || inputDate > today) {
         return;
       }
     }
-    
+
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -53,13 +62,13 @@ export default function AddUserPage() {
       setError("名前は必須です。");
       return;
     }
-    
+
     // 生年月日のバリデーション
     if (formData.birth_date) {
       const inputDate = new Date(formData.birth_date);
       const today = new Date();
-      const minDate = new Date('1900-01-01');
-      
+      const minDate = new Date("1900-01-01");
+
       if (inputDate < minDate || inputDate > today) {
         setError("生年月日は1900年以降、今日までの日付を入力してください。");
         return;
@@ -117,7 +126,12 @@ export default function AddUserPage() {
         <Link href="/users/list">
           <Button variant="outline">
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
             </svg>
             一覧に戻る
           </Button>
@@ -129,7 +143,11 @@ export default function AddUserPage() {
         <Alert variant="error" onClose={() => setError(null)}>
           <div className="flex items-start gap-3">
             <svg className="h-5 w-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clipRule="evenodd"
+              />
             </svg>
             <div className="text-sm">
               <p className="font-medium mb-1">登録エラー</p>
@@ -260,7 +278,7 @@ export default function AddUserPage() {
                   value={formData.birth_date}
                   onChange={handleChange}
                   min="1900-01-01"
-                  max={new Date().toISOString().split('T')[0]}
+                  max={new Date().toISOString().split("T")[0]}
                   helperText="1900年以降、今日までの日付を選択してください"
                 />
               </div>
@@ -280,7 +298,7 @@ export default function AddUserPage() {
                 />
               </div>
             </div>
-            
+
             {/* 会員状態とポイント */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -321,7 +339,10 @@ export default function AddUserPage() {
           <CardContent className="space-y-6">
             {/* メモ */}
             <div className="space-y-2">
-              <label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="notes"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
                 メモ・備考
               </label>
               <textarea
@@ -354,12 +375,7 @@ export default function AddUserPage() {
             {loading ? "登録中..." : "ユーザーを登録する"}
           </Button>
           <Link href="/users/list">
-            <Button
-              variant="outline"
-              size="lg"
-              disabled={loading}
-              className="w-full sm:w-auto"
-            >
+            <Button variant="outline" size="lg" disabled={loading} className="w-full sm:w-auto">
               キャンセル
             </Button>
           </Link>

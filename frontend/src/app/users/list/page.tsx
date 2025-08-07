@@ -2,15 +2,27 @@
 
 import React, { useState, useEffect, Fragment, useCallback, Suspense, lazy } from "react";
 import { useSearchParams } from "next/navigation";
-import { fetchUsers, fetchStatusCounts, bulkDeleteUsers, bulkExportUsers, BulkOperationParams } from "../../../lib/api/users";
+import {
+  fetchUsers,
+  fetchStatusCounts,
+  bulkDeleteUsers,
+  bulkExportUsers,
+  BulkOperationParams,
+  deleteUser,
+} from "../../../lib/api/users";
 import Link from "next/link";
 import { User } from "../../../lib/api/users";
 import { SearchField } from "@/components/SearchField";
 import { Button, Alert } from "@/components/ui";
+import DeleteConfirmModal from "@/components/DeleteConfirmModal";
 
 // 重いコンポーネントを動的インポート
-const UserTable = lazy(() => import("@/components/UserTable").then(module => ({ default: module.UserTable })));
-const FilterPanel = lazy(() => import("@/components/FilterPanel").then(module => ({ default: module.FilterPanel })));
+const UserTable = lazy(() =>
+  import("@/components/UserTable").then((module) => ({ default: module.UserTable }))
+);
+const FilterPanel = lazy(() =>
+  import("@/components/FilterPanel").then((module) => ({ default: module.FilterPanel }))
+);
 
 // ローディングコンポーネント
 const UserTableSkeleton = () => (
@@ -18,7 +30,10 @@ const UserTableSkeleton = () => (
     <div className="animate-pulse">
       <div className="h-16 bg-gray-200 dark:bg-gray-800 rounded-t-lg"></div>
       {[...Array(5)].map((_, i) => (
-        <div key={i} className="h-16 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50"></div>
+        <div
+          key={i}
+          className="h-16 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50"
+        ></div>
       ))}
     </div>
   </div>
@@ -41,7 +56,7 @@ const FilterPanelSkeleton = () => (
 
 function UserListContent() {
   const searchParams = useSearchParams();
-  
+
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,14 +74,14 @@ function UserListContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<Record<string, string[]>>({});
   const [showFilters, setShowFilters] = useState(false);
-  
+
   // バルク操作用の状態
   const [selectedUsers, setSelectedUsers] = useState<Set<number>>(new Set());
   const [selectAll, setSelectAll] = useState<{
     enabled: boolean;
-    type: 'all' | 'filtered';
+    type: "all" | "filtered";
     filters?: Record<string, string | string[]>;
-  }>({ enabled: false, type: 'all' });
+  }>({ enabled: false, type: "all" });
 
   // フィルターのカウント用に全ステータスの件数を保持
   const [statusCounts, setStatusCounts] = useState<Record<string, number>>({
@@ -76,28 +91,40 @@ function UserListContent() {
     expired: 0,
   });
 
+  // 削除モーダル用の状態
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    user: User | null;
+    mode: "single" | "bulk";
+  }>({
+    isOpen: false,
+    user: null,
+    mode: "single",
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
+
   // URLパラメータから初期フィルター状態を設定
   useEffect(() => {
     const initialFilters: Record<string, string[]> = {};
-    
+
     // statusパラメータを処理
-    const statusParam = searchParams.get('status');
+    const statusParam = searchParams.get("status");
     if (statusParam) {
-      initialFilters.status = statusParam.split(',');
+      initialFilters.status = statusParam.split(",");
     }
-    
+
     // createdパラメータを処理
-    const createdParam = searchParams.get('created');
+    const createdParam = searchParams.get("created");
     if (createdParam) {
       initialFilters.created = [createdParam];
     }
-    
+
     // 検索クエリを処理
-    const qParam = searchParams.get('q');
+    const qParam = searchParams.get("q");
     if (qParam) {
       setSearchQuery(qParam);
     }
-    
+
     // フィルターを設定
     if (Object.keys(initialFilters).length > 0) {
       setFilters(initialFilters);
@@ -184,20 +211,21 @@ function UserListContent() {
 
   // セッションストレージから選択状態を復元
   React.useEffect(() => {
-    const savedSelections = sessionStorage.getItem('selectedUsers');
+    const savedSelections = sessionStorage.getItem("selectedUsers");
     if (savedSelections) {
       try {
         const parsed = JSON.parse(savedSelections);
-        setSelectedUsers(new Set(parsed));
+        // 数値として復元
+        setSelectedUsers(new Set(parsed.map((id: unknown) => Number(id))));
       } catch (e) {
-        console.error('Failed to parse saved selections:', e);
+        console.error("Failed to parse saved selections:", e);
       }
     }
   }, []);
 
   // 選択状態をセッションストレージに保存
   React.useEffect(() => {
-    sessionStorage.setItem('selectedUsers', JSON.stringify(Array.from(selectedUsers)));
+    sessionStorage.setItem("selectedUsers", JSON.stringify(Array.from(selectedUsers)));
   }, [selectedUsers]);
 
   const totalPages = meta?.last_page || Math.ceil(users.length / itemsPerPage);
@@ -227,12 +255,12 @@ function UserListContent() {
 
   // バルク操作のハンドラー
   const handleUserSelect = (userId: number, selected: boolean) => {
-    setSelectedUsers(prev => {
+    setSelectedUsers((prev) => {
       const newSet = new Set(prev);
       if (selected) {
-        newSet.add(userId);
+        newSet.add(Number(userId)); // 数値として追加
       } else {
-        newSet.delete(userId);
+        newSet.delete(Number(userId)); // 数値として削除
       }
       return newSet;
     });
@@ -240,39 +268,55 @@ function UserListContent() {
 
   const handleSelectAllVisible = (selected: boolean) => {
     if (selected) {
-      const visibleUserIds = users.map(user => user.id);
-      setSelectedUsers(prev => new Set([...prev, ...visibleUserIds]));
+      const visibleUserIds = users.map((user) => Number(user.id)); // 数値として取得
+      setSelectedUsers((prev) => new Set([...prev, ...visibleUserIds]));
     } else {
-      const visibleUserIds = new Set(users.map(user => user.id));
-      setSelectedUsers(prev => new Set(Array.from(prev).filter(id => !visibleUserIds.has(id))));
+      const visibleUserIds = new Set(users.map((user) => Number(user.id))); // 数値として取得
+      setSelectedUsers(
+        (prev) => new Set(Array.from(prev).filter((id) => !visibleUserIds.has(Number(id))))
+      ); // 数値として比較
     }
   };
 
-  const handleSelectAllPages = (type: 'all' | 'filtered') => {
+  const handleSelectAllPages = (type: "all" | "filtered") => {
+    // フィルターが実際に設定されているかチェック
+    const hasActiveFilters =
+      searchQuery ||
+      (filters.status && filters.status.length > 0) ||
+      (filters.created && filters.created.length > 0);
+
+    // フィルターがない場合は'all'として扱う
+    const actualType = type === "filtered" && !hasActiveFilters ? "all" : type;
+
     setSelectAll({
       enabled: true,
-      type,
-      filters: type === 'filtered' ? { 
-        q: searchQuery,
-        status: filters.status || [],
-        created: filters.created || []
-      } : undefined
+      type: actualType,
+      filters:
+        actualType === "filtered"
+          ? {
+              q: searchQuery,
+              status: filters.status || [],
+              created: filters.created || [],
+            }
+          : undefined,
     });
-    // 現在表示されているユーザーも選択に追加
-    const visibleUserIds = users.map(user => user.id);
-    setSelectedUsers(prev => new Set([...prev, ...visibleUserIds]));
+    // 現在表示されているユーザーも選択に追加（数値として）
+    const visibleUserIds = users.map((user) => Number(user.id));
+    setSelectedUsers((prev) => new Set([...prev, ...visibleUserIds]));
   };
 
   const handleClearSelection = () => {
     setSelectedUsers(new Set());
-    setSelectAll({ enabled: false, type: 'all' });
-    sessionStorage.removeItem('selectedUsers');
+    setSelectAll({ enabled: false, type: "all" });
+    sessionStorage.removeItem("selectedUsers");
+    // フォースリフレッシュのためのフラグをクリア
+    sessionStorage.removeItem("bulkOperation");
   };
 
   const getSelectedCount = () => {
     if (selectAll.enabled) {
       // サーバーから実際の件数を取得する必要があります（簡易実装では概算）
-      return selectAll.type === 'all' ? (meta?.total || 0) : (meta?.total || 0);
+      return selectAll.type === "all" ? meta?.total || 0 : meta?.total || 0;
     }
     return selectedUsers.size;
   };
@@ -280,18 +324,57 @@ function UserListContent() {
   // バルク操作の実装
   const prepareBulkParams = (): BulkOperationParams => {
     if (selectAll.enabled) {
-      return {
+      // フィルター条件を確認
+      let hasFilters = false;
+      const filterParams: Record<string, string> = {};
+
+      if (selectAll.type === "filtered" && selectAll.filters) {
+        const storedFilters = selectAll.filters as {
+          q?: string;
+          status?: string[];
+          created?: string[];
+        };
+
+        if (storedFilters.q) {
+          filterParams.q = storedFilters.q;
+          hasFilters = true;
+        }
+
+        if (
+          storedFilters.status &&
+          Array.isArray(storedFilters.status) &&
+          storedFilters.status.length > 0
+        ) {
+          filterParams.status = storedFilters.status.join(",");
+          hasFilters = true;
+        }
+
+        if (
+          storedFilters.created &&
+          Array.isArray(storedFilters.created) &&
+          storedFilters.created.length > 0
+        ) {
+          filterParams.created = storedFilters.created[0];
+          hasFilters = true;
+        }
+      }
+
+      // フィルターがない場合は'all'として送信
+      const params: BulkOperationParams = {
         select_all: true,
-        select_type: selectAll.type,
-        filters: selectAll.type === 'filtered' ? {
-          q: searchQuery || undefined,
-          status: filters.status?.join(',') || undefined,
-          created: filters.created?.[0] || undefined,
-        } : undefined,
+        select_type: hasFilters ? "filtered" : "all",
       };
+
+      // フィルターがある場合のみ追加
+      if (hasFilters) {
+        params.filters = filterParams;
+      }
+
+      return params;
     } else {
+      // user_idsを数値配列として確実に送信
       return {
-        user_ids: Array.from(selectedUsers),
+        user_ids: Array.from(selectedUsers).map((id) => Number(id)),
       };
     }
   };
@@ -302,47 +385,89 @@ function UserListContent() {
       await bulkExportUsers(params);
       // 成功時のフィードバック（ダウンロード自動開始）
     } catch (error) {
-      console.error('Bulk export failed:', error);
-      alert('エクスポート中にエラーが発生しました');
+      console.error("Bulk export failed:", error);
+      alert("エクスポート中にエラーが発生しました");
     }
   };
 
   const handleBulkDelete = async () => {
-    const count = getSelectedCount();
-    if (!confirm(`選択した${count}件のユーザーを削除しますか？\n\nこの操作は取り消せません。`)) {
-      return;
-    }
+    setDeleteModal({
+      isOpen: true,
+      user: null,
+      mode: "bulk",
+    });
+  };
+
+  const handleSingleDelete = (user: User) => {
+    setDeleteModal({
+      isOpen: true,
+      user,
+      mode: "single",
+    });
+  };
+
+  const confirmDelete = async () => {
+    setIsDeleting(true);
 
     try {
-      const params = prepareBulkParams();
-      const result = await bulkDeleteUsers(params);
-      
-      // 選択状態をクリア
-      handleClearSelection();
-      
-      // データを再読み込み（現在のページと検索条件を保持）
-      const res = await fetchUsers({
-        page: currentPage,
-        per_page: itemsPerPage,
-        q: searchQuery || undefined,
-        status: filters.status?.join(','),
-        created: filters.created?.[0],
-      });
+      if (deleteModal.mode === "single" && deleteModal.user) {
+        // 単一削除
+        await deleteUser(deleteModal.user.id);
 
-      if (res?.data) {
-        setUsers(res.data);
-        setMeta(res.meta);
+        // 削除されたユーザーを選択状態から除外
+        setSelectedUsers((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(Number(deleteModal.user!.id));
+          return newSet;
+        });
+
+        // 単一削除後もデータを再読み込み（確実に同期を取るため）
+        const res = await fetchUsers({
+          page: currentPage,
+          per_page: itemsPerPage,
+          q: searchQuery || undefined,
+          status: filters.status?.join(","),
+          created: filters.created?.[0],
+        });
+
+        if (res?.data) {
+          setUsers(res.data);
+          setMeta(res.meta);
+        }
+      } else {
+        // バルク削除
+        const params = prepareBulkParams();
+        await bulkDeleteUsers(params);
+
+        // 選択状態をクリア
+        handleClearSelection();
+
+        // データを再読み込み
+        const res = await fetchUsers({
+          page: currentPage,
+          per_page: itemsPerPage,
+          q: searchQuery || undefined,
+          status: filters.status?.join(","),
+          created: filters.created?.[0],
+        });
+
+        if (res?.data) {
+          setUsers(res.data);
+          setMeta(res.meta);
+        }
       }
 
       // ステータスカウントも更新
       loadStatusCounts();
-      
-      alert(`${result.deleted_count}件のユーザーを削除しました`);
-      
+
+      // モーダルを閉じる
+      setDeleteModal({ isOpen: false, user: null, mode: "single" });
     } catch (error: unknown) {
       const err = error as { message?: string };
-      console.error('Bulk delete failed:', error);
-      alert(`削除中にエラーが発生しました: ${err.message || 'Unknown error'}`);
+      console.error("Delete failed:", error);
+      alert(`削除中にエラーが発生しました: ${err.message || "Unknown error"}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -552,12 +677,13 @@ function UserListContent() {
             <UserTableSkeleton />
           ) : (
             <Suspense fallback={<UserTableSkeleton />}>
-              <UserTable 
+              <UserTable
                 users={users}
                 selectedUsers={selectedUsers}
                 onUserSelect={handleUserSelect}
                 onSelectAllVisible={handleSelectAllVisible}
                 onSelectAllPages={handleSelectAllPages}
+                onDelete={handleSingleDelete}
               />
             </Suspense>
           )}
@@ -600,7 +726,11 @@ function UserListContent() {
                         label: "ステータス",
                         options: [
                           { value: "active", label: "アクティブ", count: statusCounts.active },
-                          { value: "inactive", label: "非アクティブ", count: statusCounts.inactive },
+                          {
+                            value: "inactive",
+                            label: "非アクティブ",
+                            count: statusCounts.inactive,
+                          },
                           { value: "pending", label: "保留中", count: statusCounts.pending },
                           { value: "expired", label: "期限切れ", count: statusCounts.expired },
                         ],
@@ -664,30 +794,18 @@ function UserListContent() {
               </span>
               {selectAll.enabled && (
                 <span className="text-xs bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-200 px-2 py-1 rounded">
-                  {selectAll.type === 'all' ? '全件選択' : '条件選択'}
+                  {selectAll.type === "all" ? "全件選択" : "条件選択"}
                 </span>
               )}
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleBulkExport}
-              >
+              <Button variant="outline" size="sm" onClick={handleBulkExport}>
                 📄 エクスポート
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleBulkDelete}
-              >
+              <Button variant="outline" size="sm" onClick={handleBulkDelete}>
                 🗑️ 削除
               </Button>
-              <Button
-                variant="outline" 
-                size="sm"
-                onClick={handleClearSelection}
-              >
+              <Button variant="outline" size="sm" onClick={handleClearSelection}>
                 選択解除
               </Button>
             </div>
@@ -909,6 +1027,16 @@ function UserListContent() {
           </div>
         </div>
       )}
+
+      {/* 削除確認モーダル */}
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, user: null, mode: "single" })}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+        user={deleteModal.user}
+        selectedCount={deleteModal.mode === "bulk" ? getSelectedCount() : undefined}
+      />
     </div>
   );
 }

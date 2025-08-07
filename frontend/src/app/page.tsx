@@ -42,24 +42,24 @@ export default function Home() {
 
   const loadDashboardData = async () => {
     try {
-      setStats(prev => ({ ...prev, loading: true, error: null }));
-      
+      setStats((prev) => ({ ...prev, loading: true, error: null }));
+
       // 段階的にデータを表示するため、Promise.allSettledを使用
       const [statusCountsResult, recentUsersResult] = await Promise.allSettled([
         fetchStatusCounts(),
-        fetchUsers({ created: 'today', per_page: 1 })
+        fetchUsers({ created: "today", per_page: 1 }),
       ]);
-      
+
       // ステータスカウント結果を処理
-      const statusCounts = statusCountsResult.status === 'fulfilled' 
-        ? statusCountsResult.value 
-        : { total: 0, active: 0, pending: 0, inactive: 0, expired: 0 };
-        
+      const statusCounts =
+        statusCountsResult.status === "fulfilled"
+          ? statusCountsResult.value
+          : { total: 0, active: 0, pending: 0, inactive: 0, expired: 0 };
+
       // 新規ユーザー数を処理
-      const recentUsers = recentUsersResult.status === 'fulfilled' 
-        ? recentUsersResult.value.meta?.total || 0 
-        : 0;
-      
+      const recentUsers =
+        recentUsersResult.status === "fulfilled" ? recentUsersResult.value.meta?.total || 0 : 0;
+
       setStats({
         totalUsers: statusCounts.total || 0,
         activeUsers: statusCounts.active || 0,
@@ -71,11 +71,11 @@ export default function Home() {
         error: null,
       });
     } catch (error) {
-      console.error('Dashboard data loading failed:', error);
-      setStats(prev => ({
+      console.error("Dashboard data loading failed:", error);
+      setStats((prev) => ({
         ...prev,
         loading: false,
-        error: 'データの読み込みに失敗しました',
+        error: "データの読み込みに失敗しました",
       }));
     }
   };
@@ -87,7 +87,12 @@ export default function Home() {
       href: "/users/list",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+          />
         </svg>
       ),
     },
@@ -97,7 +102,12 @@ export default function Home() {
       href: "/users/add",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+          />
         </svg>
       ),
     },
@@ -107,7 +117,12 @@ export default function Home() {
       href: "/users/import",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+          />
         </svg>
       ),
     },
@@ -117,7 +132,12 @@ export default function Home() {
       href: "/users/export",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
+          />
         </svg>
       ),
     },
@@ -167,15 +187,12 @@ export default function Home() {
           {stats.error && (
             <div className="mb-4 p-4 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-lg text-center">
               {stats.error}
-              <button 
-                onClick={loadDashboardData}
-                className="ml-2 underline hover:no-underline"
-              >
+              <button onClick={loadDashboardData} className="ml-2 underline hover:no-underline">
                 再試行
               </button>
             </div>
           )}
-          
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
               <div className="text-center">
@@ -191,7 +208,7 @@ export default function Home() {
                 <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">総ユーザー数</div>
               </div>
             </div>
-            
+
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
               <div className="text-center">
                 {stats.loading ? (
@@ -206,7 +223,7 @@ export default function Home() {
                 <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">アクティブ</div>
               </div>
             </div>
-            
+
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
               <div className="text-center">
                 {stats.loading ? (
@@ -221,7 +238,7 @@ export default function Home() {
                 <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">保留中</div>
               </div>
             </div>
-            
+
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
               <div className="text-center">
                 {stats.loading ? (
@@ -237,7 +254,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-          
+
           {/* ステータス詳細 */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
@@ -252,7 +269,7 @@ export default function Home() {
                 )}
               </div>
             </div>
-            
+
             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600 dark:text-gray-400">期限切れ</span>
@@ -265,7 +282,7 @@ export default function Home() {
                 )}
               </div>
             </div>
-            
+
             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600 dark:text-gray-400">アクティブ率</span>
@@ -273,10 +290,9 @@ export default function Home() {
                   <span className="text-sm text-gray-400 animate-pulse">---</span>
                 ) : (
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {stats.totalUsers > 0 
+                    {stats.totalUsers > 0
                       ? `${Math.round((stats.activeUsers / stats.totalUsers) * 100)}%`
-                      : '0%'
-                    }
+                      : "0%"}
                   </span>
                 )}
               </div>
