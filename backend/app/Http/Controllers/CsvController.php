@@ -86,13 +86,13 @@ class CsvController extends Controller
         $errorCount = 0;
         $errors = [];
         $lineNumber = 1; // ヘッダー行
-        $maxLines = 10000; // 最大行数制限
+        $maxLines = 10001; // 最大行数制限（ヘッダー行を含めて10000レコード）
         $chunkSize = 100; // バッチサイズ（パフォーマンス最適化）
-        
+
         // 全データを事前読み込み（メモリ効率化のため）
         $allData = [];
         $emailIndex = []; // メール重複チェック用インデックス
-        
+
         // Step 1: CSVデータをメモリに読み込み
         try {
             while (($data = fgetcsv($handle)) !== false) {
@@ -109,112 +109,114 @@ class CsvController extends Controller
                     $normKey = $headerMapping[$key] ?? $key;
                     $userData[$normKey] = $value;
                 }
-                
+
                 $email = $userData['email'] ?? '';
-                if (!empty($email)) {
+                if (! empty($email)) {
                     $emailIndex[] = $email;
                 }
-                
+
                 $allData[] = ['line' => $lineNumber, 'data' => $userData];
             }
-            
+
             fclose($handle);
             Storage::delete($path);
-            
+
             // Step 2: 全メールアドレスで一括重複チェック
             $existingUsers = [];
-            if (!empty($emailIndex)) {
+            if (! empty($emailIndex)) {
                 $existingUsersCollection = User::whereIn('email', array_unique($emailIndex))
-                    ->get(['id', 'email', 'name', 'phone_number', 'address', 'birth_date', 
-                          'gender', 'membership_status', 'notes', 'profile_image', 'points',
-                          'last_login_at', 'created_at', 'updated_at']);
-                
+                    ->get(['id', 'email', 'name', 'phone_number', 'address', 'birth_date',
+                        'gender', 'membership_status', 'notes', 'profile_image', 'points',
+                        'last_login_at', 'created_at', 'updated_at']);
+
                 foreach ($existingUsersCollection as $user) {
                     $existingUsers[$user->email] = $user;
                 }
             }
-            
+
             // Step 3: チャンク単位でバッチ処理
             $totalRecords = count($allData);
             $processedRecords = 0;
-            
+
             for ($i = 0; $i < $totalRecords; $i += $chunkSize) {
                 $chunk = array_slice($allData, $i, $chunkSize);
-                
+
                 DB::beginTransaction();
                 try {
                     $usersToCreate = [];
                     $usersToUpdate = [];
-                    
+
                     foreach ($chunk as $record) {
                         $lineNumber = $record['line'];
                         $userData = $record['data'];
                         $email = $userData['email'] ?? '';
-                        
+
                         $existingUser = $existingUsers[$email] ?? null;
-                        
+
                         // IDが指定されている場合のチェック（バッチでは簡素化）
-                        if (isset($userData['id']) && !empty($userData['id']) && !$existingUser) {
+                        if (isset($userData['id']) && ! empty($userData['id']) && ! $existingUser) {
                             $userById = User::find($userData['id']);
                             if ($userById) {
                                 $existingUser = $userById;
                             }
                         }
-                        
-                        $isNew = !$existingUser;
-                        
+
+                        $isNew = ! $existingUser;
+
                         // 戦略に応じた処理
                         if ($existingUser && $importStrategy === 'skip') {
                             $skippedCount++;
+
                             continue;
                         }
-                        
+
                         if ($existingUser && $importStrategy === 'create') {
                             $errors[] = [
                                 'line' => $lineNumber,
                                 'error' => "メールアドレス「{$email}」は既に存在します",
                             ];
                             $errorCount++;
+
                             continue;
                         }
-                        
+
                         // ユーザーデータの準備（パフォーマンス最適化）
                         // デフォルトパスワードを事前ハッシュ化して再利用
                         static $defaultPasswordHash = null;
                         if ($defaultPasswordHash === null) {
                             $defaultPasswordHash = bcrypt('password123');
                         }
-                        
+
                         $now = now();
-                        
+
                         // 日付フィールドのサニタイズとバリデーション
                         $birthDate = null;
-                        if (!empty($userData['birth_date']) && $userData['birth_date'] !== '' && $userData['birth_date'] !== '?') {
+                        if (! empty($userData['birth_date']) && $userData['birth_date'] !== '' && $userData['birth_date'] !== '?') {
                             $birthDate = $userData['birth_date'];
                         }
-                        
+
                         $lastLoginAt = null;
-                        if (!empty($userData['last_login_at']) && $userData['last_login_at'] !== '' && $userData['last_login_at'] !== '?') {
+                        if (! empty($userData['last_login_at']) && $userData['last_login_at'] !== '' && $userData['last_login_at'] !== '?') {
                             $lastLoginAt = $userData['last_login_at'];
                         }
-                        
+
                         $createdAt = $now;
-                        if (!empty($userData['created_at']) && $userData['created_at'] !== '' && $userData['created_at'] !== '?' && $isNew) {
+                        if (! empty($userData['created_at']) && $userData['created_at'] !== '' && $userData['created_at'] !== '?' && $isNew) {
                             $createdAt = $userData['created_at'];
                         }
-                        
+
                         $updatedAt = $now;
-                        if (!empty($userData['updated_at']) && $userData['updated_at'] !== '' && $userData['updated_at'] !== '?') {
+                        if (! empty($userData['updated_at']) && $userData['updated_at'] !== '' && $userData['updated_at'] !== '?') {
                             $updatedAt = $userData['updated_at'];
                         }
-                        
+
                         // フィールドのサニタイズ（空文字列と?をnullに）
-                        $phoneNumber = (!empty($userData['phone_number']) && $userData['phone_number'] !== '' && $userData['phone_number'] !== '?') ? $userData['phone_number'] : null;
-                        $address = (!empty($userData['address']) && $userData['address'] !== '' && $userData['address'] !== '?') ? $userData['address'] : null;
-                        $gender = (!empty($userData['gender']) && $userData['gender'] !== '' && $userData['gender'] !== '?') ? $userData['gender'] : null;
-                        $notes = (!empty($userData['notes']) && $userData['notes'] !== '' && $userData['notes'] !== '?') ? $userData['notes'] : null;
-                        $profileImage = (!empty($userData['profile_image']) && $userData['profile_image'] !== '' && $userData['profile_image'] !== '?') ? $userData['profile_image'] : null;
-                        
+                        $phoneNumber = (! empty($userData['phone_number']) && $userData['phone_number'] !== '' && $userData['phone_number'] !== '?') ? $userData['phone_number'] : null;
+                        $address = (! empty($userData['address']) && $userData['address'] !== '' && $userData['address'] !== '?') ? $userData['address'] : null;
+                        $gender = (! empty($userData['gender']) && $userData['gender'] !== '' && $userData['gender'] !== '?') ? $userData['gender'] : null;
+                        $notes = (! empty($userData['notes']) && $userData['notes'] !== '' && $userData['notes'] !== '?') ? $userData['notes'] : null;
+                        $profileImage = (! empty($userData['profile_image']) && $userData['profile_image'] !== '' && $userData['profile_image'] !== '?') ? $userData['profile_image'] : null;
+
                         $userAttributes = [
                             'name' => $userData['name'] ?? '',
                             'email' => $email,
@@ -231,7 +233,7 @@ class CsvController extends Controller
                             'created_at' => $createdAt,
                             'updated_at' => $updatedAt,
                         ];
-                        
+
                         if ($isNew) {
                             $usersToCreate[] = $userAttributes;
                             $importedCount++;
@@ -243,15 +245,15 @@ class CsvController extends Controller
                             $updatedCount++;
                         }
                     }
-                    
+
                     // バッチで新規ユーザー作成
-                    if (!empty($usersToCreate)) {
+                    if (! empty($usersToCreate)) {
                         User::insert($usersToCreate);
                     }
-                    
+
                     DB::commit();
                     $processedRecords += count($chunk);
-                    
+
                     // プログレス記録（500件ごと）
                     if ($processedRecords % 500 === 0) {
                         Log::info('CSV import progress', [
@@ -261,7 +263,7 @@ class CsvController extends Controller
                             'memory_mb' => round(memory_get_usage(true) / 1024 / 1024, 2),
                         ]);
                     }
-                    
+
                 } catch (\Exception $e) {
                     DB::rollBack();
                     throw $e;
@@ -439,10 +441,33 @@ class CsvController extends Controller
             $user->notes ?? '',
             $user->profile_image ?? '',
             $user->points ?? 0,
-            $user->last_login_at ? $user->last_login_at->format('Y-m-d H:i:s') : '',
-            $user->created_at ? $user->created_at->format('Y-m-d H:i:s') : '',
-            $user->updated_at ? $user->updated_at->format('Y-m-d H:i:s') : '',
+            $this->formatDateForCsv($user->last_login_at),
+            $this->formatDateForCsv($user->created_at),
+            $this->formatDateForCsv($user->updated_at),
         ];
+    }
+
+    /**
+     * 日付フィールドを安全にフォーマット
+     */
+    private function formatDateForCsv($dateValue): string
+    {
+        if (empty($dateValue)) {
+            return '';
+        }
+
+        // 既に文字列の場合はそのまま返す
+        if (is_string($dateValue)) {
+            return $dateValue;
+        }
+
+        // DateTimeオブジェクトの場合はformat()を使用
+        if ($dateValue instanceof \DateTime || $dateValue instanceof \DateTimeInterface) {
+            return $dateValue->format('Y-m-d H:i:s');
+        }
+
+        // その他の場合は文字列に変換
+        return (string) $dateValue;
     }
 
     /**

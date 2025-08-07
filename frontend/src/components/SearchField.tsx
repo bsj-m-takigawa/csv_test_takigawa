@@ -36,9 +36,6 @@ export const SearchField = memo<SearchFieldProps>(({
     setAnnouncement('検索がクリアされました');
   }, [onClear]);
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(e.target.value);
-  }, [onChange]);
 
   // キーボードショートカット (Ctrl/Cmd + K)
   useEffect(() => {
