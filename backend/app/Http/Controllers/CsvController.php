@@ -325,14 +325,17 @@ class CsvController extends Controller
     }
 
     /**
-     * ユーザーデータをCSVファイルにエクスポートする（メモリ最適化版）
-     * - チャンク処理でメモリ使用量を最小化
+     * ユーザーデータをCSVファイルにエクスポートする（大規模データ対応版）
+     * - カーソルベースのストリーミングで100万件規模に対応
+     * - メモリ使用量を最小化（カーソル使用）
      * - BOM付きUTF-8でExcel対応
-     * - ストリーミングレスポンスで大量データに対応
-     * - メモリ使用量監視機能付き
+     * - タイムアウト対策（実行時間無制限）
      */
     public function export()
     {
+        // 実行時間を無制限に設定（大量データエクスポート用）
+        set_time_limit(0);
+        
         $startTime = microtime(true);
         $initialMemory = memory_get_usage(true);
 
@@ -346,38 +349,42 @@ class CsvController extends Controller
             fputcsv($handle, $this->getCsvHeaders());
 
             $exportedCount = 0;
-            $chunkSize = 500; // メモリ効率を考慮したチャンクサイズ
             $peakMemory = $initialMemory;
-
-            // チャンク処理でメモリ効率化
-            User::select(['id', 'name', 'email', 'phone_number', 'address', 'birth_date',
+            
+            // カーソルを使用してメモリ効率を最大化
+            // cursorを使うことで一度に1レコードずつ処理し、メモリ使用量を最小限に
+            $users = User::select(['id', 'name', 'email', 'phone_number', 'address', 'birth_date',
                 'gender', 'membership_status', 'notes', 'profile_image', 'points',
                 'last_login_at', 'created_at', 'updated_at'])
-                ->chunk($chunkSize, function ($users) use ($handle, &$exportedCount, &$peakMemory) {
-                    foreach ($users as $user) {
-                        fputcsv($handle, $this->formatUserForCsv($user));
-                        $exportedCount++;
-
-                        // 100件ごとにメモリ使用量を監視
-                        if ($exportedCount % 100 === 0) {
-                            $currentMemory = memory_get_usage(true);
-                            $peakMemory = max($peakMemory, $currentMemory);
-
-                            // メモリ使用量が200MBを超えたら警告ログ
-                            if ($currentMemory > 200 * 1024 * 1024) {
-                                Log::warning('CSV export high memory usage', [
-                                    'exported_count' => $exportedCount,
-                                    'memory_mb' => round($currentMemory / 1024 / 1024, 2),
-                                ]);
-                            }
-                        }
+                ->cursor();
+            
+            foreach ($users as $user) {
+                fputcsv($handle, $this->formatUserForCsv($user));
+                $exportedCount++;
+                
+                // 1000件ごとに出力バッファをフラッシュ（ブラウザのタイムアウト防止）
+                if ($exportedCount % 1000 === 0) {
+                    flush();
+                    
+                    // メモリ使用量を監視
+                    $currentMemory = memory_get_usage(true);
+                    $peakMemory = max($peakMemory, $currentMemory);
+                    
+                    // 10000件ごとにログ出力
+                    if ($exportedCount % 10000 === 0) {
+                        Log::info('CSV export progress', [
+                            'exported_count' => $exportedCount,
+                            'memory_mb' => round($currentMemory / 1024 / 1024, 2),
+                            'execution_time_seconds' => round(microtime(true) - $startTime, 2),
+                        ]);
                     }
-
-                    // チャンク処理後にガベージコレクションを実行
-                    if (function_exists('gc_collect_cycles')) {
+                    
+                    // ガベージコレクションを定期的に実行
+                    if ($exportedCount % 5000 === 0 && function_exists('gc_collect_cycles')) {
                         gc_collect_cycles();
                     }
-                });
+                }
+            }
 
             fclose($handle);
 
@@ -737,10 +744,11 @@ class CsvController extends Controller
     }
 
     /**
-     * バルクエクスポート機能
+     * バルクエクスポート機能（大規模データ対応版）
      * - 個別選択：user_ids配列で指定されたユーザーをエクスポート
-     * - 全件選択：select_all=trueで全ユーザーエクスポート
+     * - 全件選択：select_all=trueで全ユーザーエクスポート（100万件対応）
      * - 条件選択：select_all=trueかつfilters指定で条件に一致するユーザーをエクスポート
+     * - カーソルベースのストリーミングで大規模データに対応
      */
     public function bulkExport(Request $request)
     {
@@ -755,6 +763,9 @@ class CsvController extends Controller
             'filters.created' => ['string', 'nullable', Rule::in(['today', 'week', 'month', 'year'])],
         ]);
 
+        // 実行時間を無制限に設定（大量データエクスポート用）
+        set_time_limit(0);
+        
         $startTime = microtime(true);
         $initialMemory = memory_get_usage(true);
 
@@ -768,7 +779,6 @@ class CsvController extends Controller
             fputcsv($handle, $this->getCsvHeaders());
 
             $exportedCount = 0;
-            $chunkSize = 500;
             $peakMemory = $initialMemory;
 
             // クエリ構築
@@ -838,32 +848,36 @@ class CsvController extends Controller
                     ->whereIn('id', $userIds);
             }
 
-            // チャンク処理でメモリ効率化
-            $query->chunk($chunkSize, function ($users) use ($handle, &$exportedCount, &$peakMemory) {
-                foreach ($users as $user) {
-                    fputcsv($handle, $this->formatUserForCsv($user));
-                    $exportedCount++;
-
-                    // 100件ごとにメモリ使用量を監視
-                    if ($exportedCount % 100 === 0) {
-                        $currentMemory = memory_get_usage(true);
-                        $peakMemory = max($peakMemory, $currentMemory);
-
-                        // メモリ使用量が200MBを超えたら警告ログ
-                        if ($currentMemory > 200 * 1024 * 1024) {
-                            Log::warning('Bulk CSV export high memory usage', [
-                                'exported_count' => $exportedCount,
-                                'memory_mb' => round($currentMemory / 1024 / 1024, 2),
-                            ]);
-                        }
+            // カーソルを使用してメモリ効率を最大化（100万件対応）
+            $users = $query->cursor();
+            
+            foreach ($users as $user) {
+                fputcsv($handle, $this->formatUserForCsv($user));
+                $exportedCount++;
+                
+                // 1000件ごとに出力バッファをフラッシュ（ブラウザのタイムアウト防止）
+                if ($exportedCount % 1000 === 0) {
+                    flush();
+                    
+                    // メモリ使用量を監視
+                    $currentMemory = memory_get_usage(true);
+                    $peakMemory = max($peakMemory, $currentMemory);
+                    
+                    // 10000件ごとにログ出力
+                    if ($exportedCount % 10000 === 0) {
+                        Log::info('Bulk CSV export progress', [
+                            'exported_count' => $exportedCount,
+                            'memory_mb' => round($currentMemory / 1024 / 1024, 2),
+                            'execution_time_seconds' => round(microtime(true) - $startTime, 2),
+                        ]);
+                    }
+                    
+                    // ガベージコレクションを定期的に実行
+                    if ($exportedCount % 5000 === 0 && function_exists('gc_collect_cycles')) {
+                        gc_collect_cycles();
                     }
                 }
-
-                // チャンク処理後にガベージコレクションを実行
-                if (function_exists('gc_collect_cycles')) {
-                    gc_collect_cycles();
-                }
-            });
+            }
 
             fclose($handle);
 

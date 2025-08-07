@@ -167,7 +167,7 @@ export const importUsers = async (
 
 export const exportUsers = async () => {
   try {
-    const response = await fetch(`${API_URL}/users/export`);
+    const response = await fetch(`${API_URL}/users/export-fast`);
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -230,7 +230,7 @@ export const bulkDeleteUsers = async (params: BulkOperationParams) => {
 
 export const bulkExportUsers = async (params: BulkOperationParams) => {
   try {
-    const response = await fetch(`${API_URL}/users/bulk-export`, {
+    const response = await fetch(`${API_URL}/users/bulk-export-fast`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

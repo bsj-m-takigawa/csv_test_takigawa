@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CsvController;
+use App\Http\Controllers\FastCsvController;
 use App\Http\Controllers\PaginationController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
@@ -26,6 +27,7 @@ Route::middleware(['throttle:10,1'])->group(function () {
     Route::post('users/import', [CsvController::class, 'import']);
     Route::post('users/check-duplicates', [CsvController::class, 'checkDuplicates']);
     Route::get('users/export', [CsvController::class, 'export']);
+    Route::get('users/export-fast', [FastCsvController::class, 'exportFast']); // 超高速エクスポート
     Route::get('users/sample-csv', [CsvController::class, 'sampleCsv']);
 });
 
@@ -49,4 +51,5 @@ Route::middleware(['throttle:60,1'])->group(function () {
     // バルク操作API
     Route::post('users/bulk-delete', [UserController::class, 'bulkDelete']);
     Route::post('users/bulk-export', [CsvController::class, 'bulkExport']);
+    Route::post('users/bulk-export-fast', [FastCsvController::class, 'bulkExportFast']); // 超高速バルクエクスポート
 });
