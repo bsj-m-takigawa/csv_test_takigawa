@@ -29,7 +29,11 @@ Route::middleware(['throttle:10,1'])->group(function () {
     Route::get('users/sample-csv', [CsvController::class, 'sampleCsv']);
 });
 
-// ステータスカウントAPI（{user}パラメータより前に定義）
+// Paginationエンドポイント（APIドキュメントに合わせて）
+Route::get('pagination', [PaginationController::class, 'index']);
+Route::get('pagination/status-counts', [PaginationController::class, 'statusCounts']);
+
+// ステータスカウントAPI（下位互換性のため）
 Route::get('users/status-counts', [PaginationController::class, 'statusCounts']);
 
 // 公開API（読み取り専用）
