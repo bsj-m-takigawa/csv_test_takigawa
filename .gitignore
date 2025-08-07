@@ -14,3 +14,18 @@ backend/.phpunit.result.cache
 backend/.phpunit.cache
 frontend/.vercel
 *.log
+
+# Python仮想環境
+csv_env/
+frontend/csv_env/
+__pycache__/
+*.pyc
+
+# テストデータ（CSVファイル）
+test-data/*.csv
+backend/*.csv
+*.csv
+
+# テストデータ生成スクリプト
+generate_*.py
+*.py
