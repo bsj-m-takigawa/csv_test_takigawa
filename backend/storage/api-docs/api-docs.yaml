@@ -1,38 +1,96 @@
 openapi: 3.0.3
 info:
   title: CSV Horizon API
-  version: 0.1.0
+  description: CSV-based user management system with import/export, pagination, filtering, and bulk operations
+  version: 1.0.0
 servers:
   - url: http://localhost:8000/api
+    description: Development server
+  - url: http://localhost:3000/api
+    description: Frontend proxy (development)
 paths:
-  /users:
+  # Pagination endpoint
+  /pagination:
     get:
-      summary: List users (paginated)
+      summary: Get paginated users with search/filter
+      tags: [Pagination]
       parameters:
         - in: query
           name: page
-          schema: { type: integer, minimum: 1 }
+          schema: { type: integer, minimum: 1, default: 1 }
+          description: Page number
         - in: query
           name: per_page
-          schema: { type: integer, minimum: 1, maximum: 100 }
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+          description: Items per page
         - in: query
           name: sort
-          schema: { type: string, enum: [name,email,membership_status,created_at] }
+          schema: { type: string, enum: [name,email,membership_status,created_at,updated_at], default: created_at }
+          description: Sort field
         - in: query
           name: order
-          schema: { type: string, enum: [asc,desc] }
+          schema: { type: string, enum: [asc,desc], default: desc }
+          description: Sort order
         - in: query
           name: q
+          schema: { type: string, maxLength: 255 }
+          description: Search query (name, email, phone)
+        - in: query
+          name: status
           schema: { type: string }
+          description: Comma-separated membership statuses
+        - in: query
+          name: created
+          schema: { type: string, enum: [today,week,month,year] }
+          description: Filter by creation date
       responses:
         '200':
-          description: OK
+          description: Paginated user list with metadata and links
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserList'
+                $ref: '#/components/schemas/PaginatedUserResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /pagination/status-counts:
+    get:
+      summary: Get user count by status with optional search filter
+      tags: [Pagination]
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string, maxLength: 255 }
+          description: Search query to filter counts
+      responses:
+        '200':
+          description: Status counts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusCounts'
+
+  # User CRUD endpoints
+  /users:
+    get:
+      summary: List all users (simple list, use /pagination for advanced features)
+      tags: [Users]
+      responses:
+        '200':
+          description: User list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
     post:
       summary: Create user
+      tags: [Users]
       requestBody:
         required: true
         content:
@@ -40,26 +98,56 @@ paths:
             schema:
               $ref: '#/components/schemas/UserCreate'
       responses:
-        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } }
-        '422': { description: Validation error }
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: User creation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /users/{id}:
     get:
-      summary: Get user
+      summary: Get user by ID
+      tags: [Users]
       parameters:
         - in: path
           name: id
           required: true
-          schema: { type: integer }
+          schema: { type: integer, minimum: 1 }
+          description: User ID
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } }
-        '404': { description: Not Found }
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     put:
       summary: Update user
+      tags: [Users]
       parameters:
         - in: path
           name: id
           required: true
-          schema: { type: integer }
+          schema: { type: integer, minimum: 1 }
       requestBody:
         required: true
         content:
@@ -67,101 +155,623 @@ paths:
             schema:
               $ref: '#/components/schemas/UserUpdate'
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } }
-        '404': { description: Not Found }
-        '422': { description: Validation error }
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
     delete:
       summary: Delete user
+      tags: [Users]
       parameters:
         - in: path
           name: id
           required: true
-          schema: { type: integer }
+          schema: { type: integer, minimum: 1 }
       responses:
-        '200': { description: Deleted }
-        '404': { description: Not Found }
+        '200':
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: "User deleted successfully" }
+        '404':
+          description: User not found
+
+  /users/bulk-delete:
+    post:
+      summary: Delete multiple users (individual or bulk with filters)
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkDeleteRequest'
+      responses:
+        '200':
+          description: Bulk delete completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkDeleteResponse'
+        '400':
+          description: Bad request (no users selected)
+        '422':
+          description: Validation error
+        '500':
+          description: Bulk delete operation failed
+
+  # CSV endpoints
   /csv/import:
     post:
-      summary: Import users by CSV
+      summary: Import users from CSV file
+      tags: [CSV]
       requestBody:
         required: true
         content:
           multipart/form-data:
             schema:
               type: object
+              required: [csv_file, import_strategy]
               properties:
                 csv_file:
                   type: string
                   format: binary
-      responses:
-        '200': { description: Accepted }
-        '400': { description: Bad CSV }
-  /csv/export:
-    get:
-      summary: Export users as CSV
+                  description: CSV file (max 10MB, .csv/.txt)
+                import_strategy:
+                  type: string
+                  enum: [create, update, skip]
+                  description: Strategy for handling existing users
       responses:
         '200':
-          description: CSV
+          description: Import completed with results
           content:
-            text/csv: { schema: { type: string, format: binary } }
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CsvImportResponse'
+        '400':
+          description: Invalid file or CSV format error
+        '500':
+          description: Import processing error
+
+  /csv/export:
+    get:
+      summary: Export all users as CSV
+      tags: [CSV]
+      responses:
+        '200':
+          description: CSV file download
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: 'attachment; filename="users_2024-01-01_120000.csv"'
+
+  /csv/bulk-export:
+    post:
+      summary: Export selected users or filtered data as CSV
+      tags: [CSV]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkExportRequest'
+      responses:
+        '200':
+          description: CSV file download
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+
+  /csv/check-duplicates:
+    post:
+      summary: Check CSV for duplicate users before import
+      tags: [CSV]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [csv_file]
+              properties:
+                csv_file:
+                  type: string
+                  format: binary
+                  description: CSV file to analyze
+      responses:
+        '200':
+          description: Duplicate analysis results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DuplicateCheckResponse'
+        '400':
+          description: Invalid file format
+        '500':
+          description: Analysis processing error
+
+  /csv/sample:
+    get:
+      summary: Download sample CSV template
+      tags: [CSV]
+      responses:
+        '200':
+          description: Sample CSV template
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
 components:
   schemas:
     User:
       type: object
       properties:
-        id: { type: integer }
-        name: { type: string }
-        email: { type: string, format: email }
-        phone_number: { type: string, nullable: true }
-        address: { type: string, nullable: true }
-        birth_date: { type: string, format: date, nullable: true }
-        gender: { type: string, enum: [male,female,other], nullable: true }
-        membership_status: { type: string, enum: [active,inactive,pending,expired], nullable: true }
-        notes: { type: string, nullable: true }
-        profile_image: { type: string, format: uri, nullable: true }
-        points: { type: integer }
-        last_login_at: { type: string, format: date-time, nullable: true }
-        created_at: { type: string, format: date-time }
-        updated_at: { type: string, format: date-time }
+        id: 
+          type: integer
+          example: 1
+        name: 
+          type: string
+          example: "山田太郎"
+        email: 
+          type: string
+          format: email
+          example: "yamada@example.com"
+        phone_number: 
+          type: string
+          nullable: true
+          example: "090-1234-5678"
+        address: 
+          type: string
+          nullable: true
+          example: "東京都渋谷区1-1-1"
+        birth_date: 
+          type: string
+          format: date
+          nullable: true
+          example: "1990-01-15"
+        gender: 
+          type: string
+          enum: [male, female, other]
+          nullable: true
+          example: "male"
+        membership_status: 
+          type: string
+          enum: [active, inactive, pending, expired]
+          example: "active"
+        notes: 
+          type: string
+          nullable: true
+          example: "VIP顧客"
+        profile_image: 
+          type: string
+          format: uri
+          nullable: true
+          example: "https://example.com/avatar.jpg"
+        points: 
+          type: integer
+          default: 0
+          example: 1500
+        last_login_at: 
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-15T10:30:00Z"
+        created_at: 
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00Z"
+        updated_at: 
+          type: string
+          format: date-time
+          example: "2024-01-15T12:00:00Z"
+
     UserCreate:
       type: object
-      required: [name,email,password,password_confirmation]
+      required: [name, email, password, password_confirmation]
       properties:
-        name: { type: string, maxLength: 255 }
-        email: { type: string, format: email, maxLength: 255 }
-        password: { type: string, minLength: 8 }
-        password_confirmation: { type: string, minLength: 8 }
-        phone_number: { type: string, maxLength: 20 }
-        address: { type: string, maxLength: 255 }
-        birth_date: { type: string, format: date }
-        gender: { type: string, enum: [male,female,other] }
-        membership_status: { type: string, enum: [active,inactive,pending,expired] }
-        notes: { type: string, maxLength: 2000 }
-        profile_image: { type: string, format: uri }
+        name: 
+          type: string
+          maxLength: 255
+          example: "田中花子"
+        email: 
+          type: string
+          format: email
+          maxLength: 255
+          example: "tanaka@example.com"
+        password: 
+          type: string
+          minLength: 8
+          description: "Minimum 8 characters with mixed case, numbers, and symbols"
+          example: "SecurePass123!"
+        password_confirmation: 
+          type: string
+          minLength: 8
+          description: "Must match password field"
+          example: "SecurePass123!"
+        phone_number: 
+          type: string
+          pattern: '^\+?[0-9]{1,4}[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,4}[-\s\.]?[0-9]{1,9}$'
+          example: "080-9876-5432"
+        address: 
+          type: string
+          maxLength: 255
+          example: "大阪府大阪市中央区2-2-2"
+        birth_date: 
+          type: string
+          format: date
+          example: "1985-05-20"
+        gender: 
+          type: string
+          enum: [male, female, other]
+          example: "female"
+        membership_status: 
+          type: string
+          enum: [active, inactive, pending, expired]
+          default: "pending"
+          example: "pending"
+        notes: 
+          type: string
+          maxLength: 2000
+          example: "新規登録ユーザー"
+        profile_image: 
+          type: string
+          format: uri
+          description: "Must be a valid and accessible URL"
+          example: "https://example.com/profiles/tanaka.jpg"
+
     UserUpdate:
       type: object
+      description: "All fields are optional for updates"
       properties:
-        name: { type: string, maxLength: 255 }
-        email: { type: string, format: email, maxLength: 255 }
-        password: { type: string, minLength: 8 }
-        password_confirmation: { type: string, minLength: 8 }
-        phone_number: { type: string, maxLength: 20 }
-        address: { type: string, maxLength: 255 }
-        birth_date: { type: string, format: date }
-        gender: { type: string, enum: [male,female,other] }
-        membership_status: { type: string, enum: [active,inactive,pending,expired] }
-        notes: { type: string, maxLength: 2000 }
-        profile_image: { type: string, format: uri }
-    UserList:
+        name: 
+          type: string
+          maxLength: 255
+        email: 
+          type: string
+          format: email
+          maxLength: 255
+          description: "Must be unique in the system"
+        password: 
+          type: string
+          minLength: 8
+          description: "Leave empty to keep current password"
+        password_confirmation: 
+          type: string
+          minLength: 8
+          description: "Required when password is provided"
+        phone_number: 
+          type: string
+          pattern: '^\+?[0-9]{1,4}[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,4}[-\s\.]?[0-9]{1,9}$'
+        address: 
+          type: string
+          maxLength: 255
+        birth_date: 
+          type: string
+          format: date
+        gender: 
+          type: string
+          enum: [male, female, other]
+        membership_status: 
+          type: string
+          enum: [active, inactive, pending, expired]
+        notes: 
+          type: string
+          maxLength: 2000
+        profile_image: 
+          type: string
+          format: uri
+
+    PaginatedUserResponse:
       type: object
       properties:
         data:
           type: array
-          items: { $ref: '#/components/schemas/User' }
+          items:
+            $ref: '#/components/schemas/User'
         meta:
           type: object
           properties:
-            total: { type: integer }
-            page: { type: integer }
-            per_page: { type: integer }
-            pages: { type: integer }
+            total: 
+              type: integer
+              example: 1250
+            current_page: 
+              type: integer
+              example: 2
+            per_page: 
+              type: integer
+              example: 20
+            last_page: 
+              type: integer
+              example: 63
+            from: 
+              type: integer
+              example: 21
+            to: 
+              type: integer
+              example: 40
+        links:
+          type: object
+          properties:
+            first: 
+              type: string
+              example: "http://localhost:8000/api/pagination?page=1"
+            last: 
+              type: string
+              example: "http://localhost:8000/api/pagination?page=63"
+            prev: 
+              type: string
+              nullable: true
+              example: "http://localhost:8000/api/pagination?page=1"
+            next: 
+              type: string
+              nullable: true
+              example: "http://localhost:8000/api/pagination?page=3"
+
+    StatusCounts:
+      type: object
+      properties:
+        active: 
+          type: integer
+          example: 450
+        inactive: 
+          type: integer
+          example: 120
+        pending: 
+          type: integer
+          example: 80
+        expired: 
+          type: integer
+          example: 25
+        total: 
+          type: integer
+          example: 675
+
+    BulkDeleteRequest:
+      type: object
+      properties:
+        user_ids:
+          type: array
+          items:
+            type: integer
+          nullable: true
+          example: [1, 2, 3, 4, 5]
+          description: "Array of user IDs to delete (for individual selection)"
+        select_all:
+          type: boolean
+          default: false
+          example: true
+          description: "True for bulk operations"
+        select_type:
+          type: string
+          enum: [all, filtered]
+          description: "Required when select_all is true"
+          example: "filtered"
+        filters:
+          type: object
+          nullable: true
+          description: "Required when select_type is 'filtered'"
+          properties:
+            q:
+              type: string
+              nullable: true
+              example: "yamada"
+            status:
+              type: string
+              nullable: true
+              example: "inactive,expired"
+            created:
+              type: string
+              enum: [today, week, month, year]
+              nullable: true
+              example: "month"
+
+    BulkDeleteResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "25件のユーザーを削除しました"
+        deleted_count:
+          type: integer
+          example: 25
+
+    BulkExportRequest:
+      type: object
+      description: "Same structure as BulkDeleteRequest but for export"
+      properties:
+        user_ids:
+          type: array
+          items:
+            type: integer
+          nullable: true
+          description: "Specific user IDs to export"
+        select_all:
+          type: boolean
+          default: false
+          description: "Export all or filtered users"
+        select_type:
+          type: string
+          enum: [all, filtered]
+          description: "Required when select_all is true"
+        filters:
+          type: object
+          nullable: true
+          description: "Filters for selective export"
+          properties:
+            q:
+              type: string
+              nullable: true
+            status:
+              type: string
+              nullable: true
+            created:
+              type: string
+              enum: [today, week, month, year]
+              nullable: true
+
+    CsvImportResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "150件を新規作成、25件を更新、5件をスキップ、2件でエラー発生"
+        results:
+          type: object
+          properties:
+            imported:
+              type: integer
+              example: 150
+            updated:
+              type: integer
+              example: 25
+            skipped:
+              type: integer
+              example: 5
+            errors:
+              type: integer
+              example: 2
+            total_processed:
+              type: integer
+              example: 182
+            strategy:
+              type: string
+              enum: [create, update, skip]
+              example: "update"
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              line:
+                type: integer
+                example: 15
+              error:
+                type: string
+                example: "メールアドレス「duplicate@example.com」は既に存在します"
+
+    DuplicateCheckResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        analysis:
+          type: object
+          properties:
+            total_records:
+              type: integer
+              example: 100
+            new_records:
+              type: integer
+              example: 85
+            duplicate_records:
+              type: integer
+              example: 15
+            recommended_strategy:
+              type: string
+              enum: [create, update, skip]
+              example: "update"
+            recommendations:
+              type: array
+              items:
+                type: string
+              example: ["重複データと新規データが混在しています。「更新優先」戦略を推奨します。"]
+        details:
+          type: object
+          properties:
+            duplicates:
+              type: array
+              items:
+                type: object
+                properties:
+                  line:
+                    type: integer
+                    example: 25
+                  csv_data:
+                    type: object
+                    properties:
+                      name: { type: string, example: "山田太郎" }
+                      email: { type: string, example: "yamada@example.com" }
+                      phone_number: { type: string, example: "090-1234-5678" }
+                  existing_user:
+                    type: object
+                    properties:
+                      id: { type: integer, example: 123 }
+                      name: { type: string, example: "山田太郎" }
+                      email: { type: string, example: "yamada@example.com" }
+                      phone_number: { type: string, example: "090-1234-5678" }
+                      created_at: { type: string, example: "2024-01-01T00:00:00Z" }
+                      updated_at: { type: string, example: "2024-01-15T12:00:00Z" }
+            new_users:
+              type: array
+              items:
+                type: object
+                properties:
+                  line:
+                    type: integer
+                    example: 10
+                  name: { type: string, example: "新規太郎" }
+                  email: { type: string, example: "newuser@example.com" }
+                  phone_number: { type: string, example: "080-9999-8888" }
+
+    ValidationError:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "The given data was invalid."
+        code:
+          type: integer
+          example: 0
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          example:
+            email: ["メールアドレスは既に使用されています。"]
+            password: ["パスワードは8文字以上で入力してください。"]
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "An error occurred"
+        code:
+          type: integer
+          example: 500
+        errors:
+          type: array
+          items:
+            type: string
+          example: []

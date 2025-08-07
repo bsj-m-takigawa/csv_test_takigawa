@@ -1,8 +1,23 @@
 .DS_Store
 .crush/
 CRUSH.md
+
+# Environment variables (sensitive data)
+.env
+.env.local
+.env.production
+.env.staging
 backend/.env
+backend/.env.local
+backend/.env.production 
+backend/.env.staging
 frontend/.env
+frontend/.env.local
+frontend/.env.production
+frontend/.env.staging
+
+# Backup files
+*.backup
 backend/vendor/
 frontend/node_modules/
 frontend/.next/
