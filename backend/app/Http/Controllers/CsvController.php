@@ -189,7 +189,7 @@ class CsvController extends Controller
                         
                         // 日付フィールドのサニタイズとバリデーション
                         $birthDate = null;
-                        if (!empty($userData['birth_date']) && $userData['birth_date'] !== '') {
+                        if (!empty($userData['birth_date']) && $userData['birth_date'] !== '' && $userData['birth_date'] !== '?') {
                             $birthDate = $userData['birth_date'];
                         }
                         
@@ -199,26 +199,33 @@ class CsvController extends Controller
                         }
                         
                         $createdAt = $now;
-                        if (!empty($userData['created_at']) && $userData['created_at'] !== '' && $isNew) {
+                        if (!empty($userData['created_at']) && $userData['created_at'] !== '' && $userData['created_at'] !== '?' && $isNew) {
                             $createdAt = $userData['created_at'];
                         }
                         
                         $updatedAt = $now;
-                        if (!empty($userData['updated_at']) && $userData['updated_at'] !== '') {
+                        if (!empty($userData['updated_at']) && $userData['updated_at'] !== '' && $userData['updated_at'] !== '?') {
                             $updatedAt = $userData['updated_at'];
                         }
+                        
+                        // フィールドのサニタイズ（空文字列と?をnullに）
+                        $phoneNumber = (!empty($userData['phone_number']) && $userData['phone_number'] !== '' && $userData['phone_number'] !== '?') ? $userData['phone_number'] : null;
+                        $address = (!empty($userData['address']) && $userData['address'] !== '' && $userData['address'] !== '?') ? $userData['address'] : null;
+                        $gender = (!empty($userData['gender']) && $userData['gender'] !== '' && $userData['gender'] !== '?') ? $userData['gender'] : null;
+                        $notes = (!empty($userData['notes']) && $userData['notes'] !== '' && $userData['notes'] !== '?') ? $userData['notes'] : null;
+                        $profileImage = (!empty($userData['profile_image']) && $userData['profile_image'] !== '' && $userData['profile_image'] !== '?') ? $userData['profile_image'] : null;
                         
                         $userAttributes = [
                             'name' => $userData['name'] ?? '',
                             'email' => $email,
                             'password' => isset($userData['password']) ? bcrypt($userData['password']) : $defaultPasswordHash,
-                            'phone_number' => $userData['phone_number'] ?? null,
-                            'address' => $userData['address'] ?? null,
+                            'phone_number' => $phoneNumber,
+                            'address' => $address,
                             'birth_date' => $birthDate,
-                            'gender' => $userData['gender'] ?? null,
+                            'gender' => $gender,
                             'membership_status' => $userData['membership_status'] ?? 'pending',
-                            'notes' => $userData['notes'] ?? null,
-                            'profile_image' => $userData['profile_image'] ?? null,
+                            'notes' => $notes,
+                            'profile_image' => $profileImage,
                             'points' => isset($userData['points']) ? (int) $userData['points'] : 0,
                             'last_login_at' => $lastLoginAt,
                             'created_at' => $createdAt,
