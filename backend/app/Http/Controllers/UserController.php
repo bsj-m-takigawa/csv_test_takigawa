@@ -88,7 +88,7 @@ class UserController extends Controller
         $user->update($data);
         Log::info('User updated', ['id' => $user->id]);
 
-        // ページネーションキャッシュをクリア
+        // ユーザー関連のキャッシュをクリア
         $this->clearUserRelatedCache();
 
         return response()->json($user);
@@ -105,7 +105,7 @@ class UserController extends Controller
         $user->delete();
         Log::info('User deleted', ['id' => $id]);
 
-        // ページネーションキャッシュをクリア
+        // ユーザー関連のキャッシュをクリア
         $this->clearUserRelatedCache();
 
         return response()->json(['message' => 'User deleted successfully'], 200);
