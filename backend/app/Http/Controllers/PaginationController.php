@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Support\QueryHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
@@ -47,19 +46,7 @@ class PaginationController extends Controller
 
         // 検索条件（フルテキスト検索を優先）
         if ($q !== null && $q !== '') {
-            if (config('database.default') === 'mysql') {
-                // MySQLの場合はフルテキスト検索を使用
-                $query->whereFullText(['name', 'email', 'phone_number'], $q);
-            } else {
-                // SQLite等の場合はLIKE検索（開発・テスト環境用）
-                $escaped = QueryHelper::escapeLike($q);
-                $like = "%{$escaped}%";
-                $query->where(function ($sub) use ($like) {
-                    $sub->whereRaw("name LIKE ? ESCAPE '\\'", [$like])
-                        ->orWhereRaw("email LIKE ? ESCAPE '\\'", [$like])
-                        ->orWhereRaw("phone_number LIKE ? ESCAPE '\\'", [$like]);
-                });
-            }
+            $query->search($q);
         }
 
         // ステータスフィルタ（複数対応）
@@ -140,19 +127,7 @@ class PaginationController extends Controller
 
         // 検索条件がある場合は適用（フルテキスト検索を優先）
         if ($q !== null && $q !== '') {
-            if (config('database.default') === 'mysql') {
-                // MySQLの場合はフルテキスト検索を使用
-                $baseQuery->whereFullText(['name', 'email', 'phone_number'], $q);
-            } else {
-                // SQLite等の場合はLIKE検索（開発・テスト環境用）
-                $escaped = QueryHelper::escapeLike($q);
-                $like = "%{$escaped}%";
-                $baseQuery->where(function ($sub) use ($like) {
-                    $sub->whereRaw("name LIKE ? ESCAPE '\\'", [$like])
-                        ->orWhereRaw("email LIKE ? ESCAPE '\\'", [$like])
-                        ->orWhereRaw("phone_number LIKE ? ESCAPE '\\'", [$like]);
-                });
-            }
+            $baseQuery->search($q);
         }
 
         // 各ステータスのカウントを取得
