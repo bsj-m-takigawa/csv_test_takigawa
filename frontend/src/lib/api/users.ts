@@ -1,33 +1,16 @@
-import { getAuthHeaders } from './auth';
-import { handleAuthError } from './auth-utils';
-import { downloadBlob } from './fetch-utils';
+import { getAuthHeaders } from "./auth";
+import { handleAuthError } from "./auth-utils";
+import { downloadBlob } from "./fetch-utils";
+import type { User } from "@/types/user";
+import { ApiResponse, ApiError } from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-  phone_number?: string;
-  address?: string;
-  birth_date?: string;
-  gender?: "male" | "female" | "other";
-  membership_status?: "active" | "inactive" | "pending" | "expired";
-  notes?: string;
-  profile_image?: string;
-  points?: number;
-  last_login_at?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-// Fetch API helper function
-async function apiFetch(url: string, options: RequestInit = {}) {
+// Fetch API helper function with typed response
+async function apiFetch<T>(url: string, options: RequestInit = {}): Promise<T> {
   const authHeaders = getAuthHeaders();
-  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
-  const baseHeaders: HeadersInit = isFormData
-    ? {} // FormData の場合は Content-Type を自動付与させる
-    : { "Content-Type": "application/json" };
+  const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
+  const baseHeaders: HeadersInit = isFormData ? {} : { "Content-Type": "application/json" };
 
   const headers: HeadersInit = {
     ...baseHeaders,
@@ -41,23 +24,24 @@ async function apiFetch(url: string, options: RequestInit = {}) {
   });
 
   if (!response.ok) {
-    // 認証エラーの場合はログインページへリダイレクト
     handleAuthError(response.status);
-    
-    const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
-    (error as Error & { response?: { status: number; data: string | null } }).response = {
-      status: response.status,
-      data: await response.text().catch(() => null),
-    };
+    const errorBody = await response.json().catch(() => ({}));
+    const error = Object.assign(
+      new Error(errorBody.message || `HTTP ${response.status}: ${response.statusText}`),
+      {
+        errors: errorBody.errors,
+        code: response.status,
+      }
+    ) as ApiError & Error;
     throw error;
   }
 
   const contentType = response.headers.get("content-type");
   if (contentType && contentType.includes("application/json")) {
-    return response.json();
+    return (await response.json()) as T;
   }
 
-  return response;
+  return response as unknown as T;
 }
 
 export const fetchUsers = async (params?: {
@@ -68,7 +52,7 @@ export const fetchUsers = async (params?: {
   q?: string;
   status?: string;
   created?: string;
-}) => {
+}): Promise<ApiResponse<User[]>> => {
   try {
     const searchParams = new URLSearchParams();
     if (params) {
@@ -80,26 +64,25 @@ export const fetchUsers = async (params?: {
     }
     const queryString = searchParams.toString();
     const url = `${API_URL}/users${queryString ? `?${queryString}` : ""}`;
-
-    return await apiFetch(url);
+    return await apiFetch<ApiResponse<User[]>>(url);
   } catch (error) {
     console.error("Error fetching users:", error);
     throw error;
   }
 };
 
-export const fetchUser = async (id: number) => {
+export const fetchUser = async (id: number): Promise<ApiResponse<User>> => {
   try {
-    return await apiFetch(`${API_URL}/users/${id}`);
+    return await apiFetch<ApiResponse<User>>(`${API_URL}/users/${id}`);
   } catch (error) {
     console.error(`Error fetching user ${id}:`, error);
     throw error;
   }
 };
 
-export const createUser = async (userData: Record<string, unknown>) => {
+export const createUser = async (userData: Record<string, unknown>): Promise<ApiResponse<User>> => {
   try {
-    return await apiFetch(`${API_URL}/users`, {
+    return await apiFetch<ApiResponse<User>>(`${API_URL}/users`, {
       method: "POST",
       body: JSON.stringify(userData),
     });
@@ -109,9 +92,12 @@ export const createUser = async (userData: Record<string, unknown>) => {
   }
 };
 
-export const updateUser = async (id: number, userData: Partial<User>) => {
+export const updateUser = async (
+  id: number,
+  userData: Partial<User>
+): Promise<ApiResponse<User>> => {
   try {
-    return await apiFetch(`${API_URL}/users/${id}`, {
+    return await apiFetch<ApiResponse<User>>(`${API_URL}/users/${id}`, {
       method: "PUT",
       body: JSON.stringify(userData),
     });
@@ -121,9 +107,9 @@ export const updateUser = async (id: number, userData: Partial<User>) => {
   }
 };
 
-export const deleteUser = async (id: number) => {
+export const deleteUser = async (id: number): Promise<ApiResponse<unknown>> => {
   try {
-    return await apiFetch(`${API_URL}/users/${id}`, {
+    return await apiFetch<ApiResponse<unknown>>(`${API_URL}/users/${id}`, {
       method: "DELETE",
     });
   } catch (error) {
@@ -132,17 +118,16 @@ export const deleteUser = async (id: number) => {
   }
 };
 
-export const importUsers = async (
+export const importUsers = async <T = unknown>(
   file: File,
   importStrategy: "create" | "update" | "skip" = "create"
-) => {
+): Promise<ApiResponse<T>> => {
   try {
     const formData = new FormData();
     formData.append("csv_file", file);
     formData.append("import_strategy", importStrategy);
 
-    // apiFetch で認証・エラー処理を統一
-    return await apiFetch(`${API_URL}/users/import`, {
+    return await apiFetch<ApiResponse<T>>(`${API_URL}/users/import`, {
       method: "POST",
       body: formData,
     });
@@ -152,15 +137,15 @@ export const importUsers = async (
   }
 };
 
-export const exportUsers = async () => {
+export const exportUsers = async (): Promise<boolean> => {
   try {
-    const resp = await apiFetch(`${API_URL}/users/export`);
+    const resp = await apiFetch<Response>(`${API_URL}/users/export`);
     if (resp instanceof Response) {
       const blob = await resp.blob();
       downloadBlob(blob, `users_${new Date().toISOString()}.csv`);
       return true;
     }
-    throw new Error('Unexpected response type for export');
+    throw new Error("Unexpected response type for export");
   } catch (error) {
     console.error("Error exporting users:", error);
     throw error;
@@ -179,17 +164,15 @@ export interface BulkOperationParams {
   };
 }
 
-export const bulkDeleteUsers = async (params: BulkOperationParams) => {
+export const bulkDeleteUsers = async (
+  params: BulkOperationParams
+): Promise<ApiResponse<unknown>> => {
   try {
     console.log("Bulk delete params:", params); // デバッグ用
-
-    // apiFetchヘルパーを使用して認証ヘッダーを自動付与
-    const response = await apiFetch(`${API_URL}/users/bulk-delete`, {
+    const response = await apiFetch<ApiResponse<unknown>>(`${API_URL}/users/bulk-delete`, {
       method: "POST",
       body: JSON.stringify(params),
     });
-
-    // apiFetchがエラーハンドリングを行うため、直接レスポンスを返す
     return response;
   } catch (error: unknown) {
     console.error("Error bulk deleting users:", error);
@@ -197,9 +180,9 @@ export const bulkDeleteUsers = async (params: BulkOperationParams) => {
   }
 };
 
-export const bulkExportUsers = async (params: BulkOperationParams) => {
+export const bulkExportUsers = async (params: BulkOperationParams): Promise<boolean> => {
   try {
-    const resp = await apiFetch(`${API_URL}/users/bulk-export`, {
+    const resp = await apiFetch<Response>(`${API_URL}/users/bulk-export`, {
       method: "POST",
       body: JSON.stringify(params),
     });
@@ -217,7 +200,7 @@ export const bulkExportUsers = async (params: BulkOperationParams) => {
       downloadBlob(blob, filename);
       return true;
     }
-    throw new Error('Unexpected response type for bulk export');
+    throw new Error("Unexpected response type for bulk export");
   } catch (error: unknown) {
     console.error("Error bulk exporting users:", error);
     throw error;
@@ -226,7 +209,7 @@ export const bulkExportUsers = async (params: BulkOperationParams) => {
 
 export const fetchStatusCounts = async (params?: {
   q?: string;
-}): Promise<Record<string, number>> => {
+}): Promise<ApiResponse<Record<string, number>>> => {
   try {
     const searchParams = new URLSearchParams();
     if (params?.q) {
@@ -235,19 +218,19 @@ export const fetchStatusCounts = async (params?: {
     const queryString = searchParams.toString();
     const url = `${API_URL}/users/status-counts${queryString ? `?${queryString}` : ""}`;
 
-    return await apiFetch(url);
+    return await apiFetch<ApiResponse<Record<string, number>>>(url);
   } catch (error) {
     console.error("Error fetching status counts:", error);
     throw error;
   }
 };
 
-export const checkDuplicates = async (file: File) => {
+export const checkDuplicates = async <T = unknown>(file: File): Promise<ApiResponse<T>> => {
   try {
     const formData = new FormData();
     formData.append("csv_file", file);
 
-    return await apiFetch(`${API_URL}/users/check-duplicates`, {
+    return await apiFetch<ApiResponse<T>>(`${API_URL}/users/check-duplicates`, {
       method: "POST",
       body: formData,
     });
@@ -257,15 +240,15 @@ export const checkDuplicates = async (file: File) => {
   }
 };
 
-export const downloadSampleCSV = async () => {
+export const downloadSampleCSV = async (): Promise<boolean> => {
   try {
-    const resp = await apiFetch(`${API_URL}/users/sample-csv`);
+    const resp = await apiFetch<Response>(`${API_URL}/users/sample-csv`);
     if (resp instanceof Response) {
       const blob = await resp.blob();
-      downloadBlob(blob, 'sample_users.csv');
+      downloadBlob(blob, "sample_users.csv");
       return true;
     }
-    throw new Error('Unexpected response type for sample CSV');
+    throw new Error("Unexpected response type for sample CSV");
   } catch (error) {
     console.error("Error downloading sample CSV:", error);
     throw error;

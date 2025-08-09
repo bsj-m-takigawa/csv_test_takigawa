@@ -2,7 +2,7 @@
 
 import React, { useMemo, useRef, useCallback, memo } from "react";
 import { FixedSizeList as List } from "react-window";
-import { User } from "@/lib/api/users";
+import { User } from "@/types/user";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui";
 

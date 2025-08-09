@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { fetchUser, deleteUser, User } from "@/lib/api/users";
+import { fetchUser, deleteUser } from "@/lib/api/users";
+import { User } from "@/types/user";
 
 export default function DeleteUserPage() {
   const params = useParams();
@@ -20,7 +21,7 @@ export default function DeleteUserPage() {
     const loadUser = async () => {
       try {
         setLoading(true);
-        const userData = await fetchUser(userId);
+        const { data: userData } = await fetchUser(userId);
         setUser(userData);
         setError(null);
       } catch (err) {
