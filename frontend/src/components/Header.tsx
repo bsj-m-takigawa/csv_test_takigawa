@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { isAuthenticated, logout } from "@/lib/api/auth";
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -17,6 +19,11 @@ export default function Header() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    // 認証状態をチェック
+    setIsLoggedIn(isAuthenticated());
+  }, [pathname]); // パス変更時に再チェック
 
   const navigation = [
     { name: "ホーム", href: "/" },
@@ -66,6 +73,22 @@ export default function Header() {
                 {item.name}
               </Link>
             ))}
+            {/* ログイン/ログアウトボタン */}
+            {isLoggedIn ? (
+              <button
+                onClick={logout}
+                className="text-sm font-light text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+              >
+                ログアウト
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                className="text-sm font-light text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+              >
+                ログイン
+              </Link>
+            )}
           </nav>
 
           {/* Mobile Menu Button */}
@@ -110,6 +133,26 @@ export default function Header() {
                   {item.name}
                 </Link>
               ))}
+              {/* モバイルメニューのログイン/ログアウト */}
+              {isLoggedIn ? (
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    logout();
+                  }}
+                  className="block w-full text-left px-3 py-2 text-sm font-light text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+                >
+                  ログアウト
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block px-3 py-2 text-sm font-light text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                >
+                  ログイン
+                </Link>
+              )}
             </nav>
           </div>
         )}

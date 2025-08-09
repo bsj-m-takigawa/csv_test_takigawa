@@ -38,9 +38,11 @@ function LoginForm() {
 
       const data = await response.json();
       
-      // トークンをローカルストレージに保存
+      // トークンをローカルストレージとクッキーに保存
       if (data.access_token) {
         localStorage.setItem('auth_token', data.access_token);
+        // クッキーにも保存（ミドルウェアで使用）
+        document.cookie = `auth_token=${data.access_token}; path=/; max-age=86400; SameSite=Strict`;
       }
 
       // 元のページまたはホームページへリダイレクト
