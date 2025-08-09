@@ -15,11 +15,19 @@ class UserController extends Controller
 {
     /**
      * Display a listing of the resource.
+     * 
+     * 注意: このメソッドは現在使用されていません。
+     * GET /api/users エンドポイントは PaginationController::index() を使用しています。
+     * 
+     * このメソッドは将来の使用に備えて、メモリ効率を考慮したページネーション実装を保持しています。
+     * もし将来このメソッドを使用する場合は、routes/api.php でルーティングの追加が必要です。
+     * 
+     * @deprecated 現在は使用されていません。PaginationControllerを参照してください。
      */
     public function index(Request $request)
     {
         // ページネーション付きでユーザーを取得（メモリ効率改善）
-        $perPage = $request->get('per_page', 15);
+        $perPage = (int) $request->get('per_page', 15);
         $perPage = min(max($perPage, 1), 100); // 1-100の範囲に制限
         
         $users = User::paginate($perPage);
