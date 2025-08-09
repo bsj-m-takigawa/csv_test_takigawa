@@ -4,17 +4,17 @@ CRUSH.md
 
 # Environment variables (sensitive data)
 .env
-.env.local
-.env.production
-.env.staging
+.env.*
+!.env.example
+!.env.sample
 backend/.env
-backend/.env.local
-backend/.env.production 
-backend/.env.staging
+backend/.env.*
+!backend/.env.example
+!backend/.env.sample
 frontend/.env
-frontend/.env.local
-frontend/.env.production
-frontend/.env.staging
+frontend/.env.*
+!frontend/.env.example
+!frontend/.env.sample
 
 # Backup files
 *.backup
