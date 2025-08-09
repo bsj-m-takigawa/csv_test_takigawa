@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 class CacheManagementTest extends TestCase
@@ -174,5 +175,38 @@ class CacheManagementTest extends TestCase
         // キャッシュがクリアされていることを確認
         $cachedData = Cache::tags(['users', 'status_counts'])->get($cacheKey);
         $this->assertNull($cachedData);
+    }
+
+    public function test_cache_logging_and_metrics(): void
+    {
+        Log::spy();
+        Cache::forget('metrics:cache_hit');
+        Cache::forget('metrics:cache_miss');
+        User::factory()->count(3)->create();
+
+        $cacheKey = 'pagination:'.md5(serialize([]));
+
+        $this->getJson('/api/pagination');
+
+        Log::shouldHaveReceived('info')->withArgs(function ($message, $context) use ($cacheKey) {
+            return $message === 'Cache miss'
+                && $context['key'] === $cacheKey
+                && $context['endpoint'] === 'api/pagination'
+                && isset($context['query_time']);
+        })->once();
+
+        Log::spy();
+
+        $this->getJson('/api/pagination');
+
+        Log::shouldHaveReceived('info')->withArgs(function ($message, $context) use ($cacheKey) {
+            return $message === 'Cache hit'
+                && $context['key'] === $cacheKey
+                && $context['endpoint'] === 'api/pagination'
+                && isset($context['response_time']);
+        })->once();
+
+        $this->assertSame(1, Cache::get('metrics:cache_hit'));
+        $this->assertSame(1, Cache::get('metrics:cache_miss'));
     }
 }
