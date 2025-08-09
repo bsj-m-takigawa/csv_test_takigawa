@@ -26,7 +26,7 @@ class CsvImportPasswordTest extends TestCase
         ]);
 
         $response->assertStatus(200);
-        
+
         $user = User::where('email', 'tanaka@example.com')->first();
         $this->assertNotNull($user);
         // パスワードがmypassword123で設定されていることを確認
@@ -47,7 +47,7 @@ class CsvImportPasswordTest extends TestCase
         ]);
 
         $response->assertStatus(200);
-        
+
         $user = User::where('email', 'suzuki@example.com')->first();
         $this->assertNotNull($user);
         $this->assertNotNull($user->password);
@@ -77,7 +77,7 @@ class CsvImportPasswordTest extends TestCase
         ]);
 
         $response->assertStatus(200);
-        
+
         $user = User::find($existingUser->id);
         $this->assertEquals($originalPassword, $user->password);
         $this->assertTrue(Hash::check('original_password', $user->password));
@@ -105,7 +105,7 @@ class CsvImportPasswordTest extends TestCase
         ]);
 
         $response->assertStatus(200);
-        
+
         $user = User::find($existingUser->id);
         $this->assertEquals($originalPassword, $user->password);
         $this->assertTrue(Hash::check('original_password', $user->password));
@@ -132,7 +132,7 @@ class CsvImportPasswordTest extends TestCase
         ]);
 
         $response->assertStatus(200);
-        
+
         $user = User::find($existingUser->id);
         // パスワードが更新されていることを確認
         $this->assertTrue(Hash::check('new_password123', $user->password), 'Password should be updated from CSV');
@@ -155,7 +155,7 @@ class CsvImportPasswordTest extends TestCase
         $csvContent .= "新規ユーザー,new@test.com,new_user_pass\n";
         $csvContent .= "既存ユーザー,existing@test.com,\n"; // パスワード空
         $csvContent .= "新規ユーザー2,new2@test.com,\n"; // 新規でパスワード空
-        
+
         $file = UploadedFile::fake()->createWithContent('users.csv', $csvContent);
 
         $response = $this->postJson('/api/users/import', [
@@ -164,16 +164,16 @@ class CsvImportPasswordTest extends TestCase
         ]);
 
         $response->assertStatus(200);
-        
+
         // 新規ユーザー（パスワード指定あり）
         $newUser1 = User::where('email', 'new@test.com')->first();
         $this->assertNotNull($newUser1);
         $this->assertTrue(Hash::check('new_user_pass', $newUser1->password), 'New user password should be set from CSV');
-        
+
         // 既存ユーザー（パスワード変更なし）
         $existingUserReloaded = User::find($existingUser->id);
         $this->assertTrue(Hash::check('keep_this_password', $existingUserReloaded->password));
-        
+
         // 新規ユーザー（パスワード未指定）
         $newUser2 = User::where('email', 'new2@test.com')->first();
         $this->assertNotNull($newUser2->password);

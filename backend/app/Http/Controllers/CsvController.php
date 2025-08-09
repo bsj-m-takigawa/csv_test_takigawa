@@ -247,11 +247,12 @@ class CsvController extends Controller
                             'updated_at' => $updatedAt,
                         ];
 
+                        // パスワード処理
+                        $passwordHash = $this->handlePasswordForUser($userData, $isNew, $defaultPasswordHash);
+
                         if ($isNew) {
-                            // 新規ユーザーの場合、パスワードを設定
-                            $userAttributes['password'] = isset($userData['password']) && $userData['password'] !== ''
-                                ? Hash::make($userData['password'])
-                                : $defaultPasswordHash;
+                            // 新規ユーザーの場合、パスワードは必須
+                            $userAttributes['password'] = $passwordHash;
                             $usersToCreate[] = $userAttributes;
                             $importedCount++;
                         } else {
@@ -259,11 +260,11 @@ class CsvController extends Controller
                             $updateAttributes = $userAttributes;
                             unset($updateAttributes['created_at']); // 更新時はcreated_atは変更しない
 
-                            // 既存ユーザーのパスワードはCSVに明示的に値がある場合のみ更新
-                            if (isset($userData['password']) && $userData['password'] !== '') {
-                                $updateAttributes['password'] = Hash::make($userData['password']);
+                            // 既存ユーザーのパスワードは明示的に値がある場合のみ更新
+                            if ($passwordHash !== null) {
+                                $updateAttributes['password'] = $passwordHash;
                             }
-                            // パスワードが空または未指定の場合は更新しない
+                            // パスワードがnullの場合は更新しない
 
                             User::where('id', $existingUser->id)->update($updateAttributes);
                             $updatedCount++;
@@ -938,5 +939,31 @@ class CsvController extends Controller
         $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
 
         return $response;
+    }
+
+    /**
+     * ユーザーのパスワード処理をハンドル
+     *
+     * @param  array  $userData  CSVからのユーザーデータ
+     * @param  bool  $isNew  新規ユーザーかどうか
+     * @param  string  $defaultPasswordHash  デフォルトパスワードのハッシュ
+     * @return string|null パスワードハッシュまたはnull
+     */
+    private function handlePasswordForUser(array $userData, bool $isNew, string $defaultPasswordHash): ?string
+    {
+        // パスワードが設定されていて、空白でない場合（trimで空白文字を除去）
+        $hasPassword = isset($userData['password']) && trim($userData['password']) !== '';
+
+        if ($isNew) {
+            // 新規ユーザー：パスワードがあれば使用、なければデフォルト
+            return $hasPassword
+                ? Hash::make(trim($userData['password']))
+                : $defaultPasswordHash;
+        }
+
+        // 既存ユーザー：パスワードがある場合のみ更新、なければnull
+        return $hasPassword
+            ? Hash::make(trim($userData['password']))
+            : null;
     }
 }
