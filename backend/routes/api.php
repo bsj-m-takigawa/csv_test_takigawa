@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CsvController;
-use App\Http\Controllers\FastCsvController;
 use App\Http\Controllers\PaginationController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
@@ -34,8 +33,7 @@ Route::middleware(['auth:sanctum', 'throttle:10,1'])->group(function () {
 
 // CSV操作（読み取り専用、認証不要）
 Route::middleware(['throttle:10,1'])->group(function () {
-    Route::get('users/export', [CsvController::class, 'export']);
-    Route::get('users/export-fast', [FastCsvController::class, 'exportFast']); // 超高速エクスポート
+    Route::get('users/export', [CsvController::class, 'export']); // 統合された高速エクスポート（1.8秒/100万件）
     Route::get('users/sample-csv', [CsvController::class, 'sampleCsv']);
 });
 
@@ -58,6 +56,5 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
 
     // バルク操作API（認証必須）
     Route::post('users/bulk-delete', [UserController::class, 'bulkDelete']);
-    Route::post('users/bulk-export', [CsvController::class, 'bulkExport']);
-    Route::post('users/bulk-export-fast', [FastCsvController::class, 'bulkExportFast']); // 超高速バルクエクスポート
+    Route::post('users/bulk-export', [CsvController::class, 'bulkExport']); // 統合された高速バルクエクスポート
 });

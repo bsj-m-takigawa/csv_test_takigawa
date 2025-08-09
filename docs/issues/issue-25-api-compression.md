@@ -1,4 +1,4 @@
-# Issue #25: API応答のgzip圧縮実装 ✅ COMPLETED
+# Issue #25: API応答のgzip圧縮実装 [CLOSED]
 
 ## 優先度: 🟢 Medium
 ## ステータス: ✅ 完了 (2025-08-06)

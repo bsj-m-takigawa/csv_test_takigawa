@@ -1,4 +1,4 @@
-# Issue #21: APIレスポンスキャッシュの実装
+# Issue #21: APIレスポンスキャッシュの実装 [CLOSED]
 
 ## 優先度: 🔴 Critical
 
