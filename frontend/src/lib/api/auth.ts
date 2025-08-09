@@ -5,10 +5,10 @@
  * XSS攻撃のリスク軽減のためlocalStorageではなくsessionStorageを使用
  */
 export function getAuthToken(): string | null {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return null;
   }
-  return sessionStorage.getItem('auth_token');
+  return sessionStorage.getItem("auth_token");
 }
 
 /**
@@ -18,7 +18,7 @@ export function getAuthHeaders(): Record<string, string> {
   const token = getAuthToken();
   if (token) {
     return {
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
     };
   }
   return {};
@@ -28,11 +28,11 @@ export function getAuthHeaders(): Record<string, string> {
  * ログアウト処理
  */
 export function logout(): void {
-  if (typeof window !== 'undefined') {
-    sessionStorage.removeItem('auth_token');
+  if (typeof window !== "undefined") {
+    sessionStorage.removeItem("auth_token");
     // クッキーも削除
-    document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict';
-    window.location.href = '/login';
+    document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict";
+    window.location.href = "/login";
   }
 }
 

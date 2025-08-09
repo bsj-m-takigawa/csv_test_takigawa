@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { User } from "@/lib/api/users";
+import { User } from "@/types/user";
 
 interface DeleteConfirmModalProps {
   isOpen: boolean;

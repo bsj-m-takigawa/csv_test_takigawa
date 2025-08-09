@@ -53,7 +53,7 @@ export default function Home() {
       // ステータスカウント結果を処理
       const statusCounts =
         statusCountsResult.status === "fulfilled"
-          ? statusCountsResult.value
+          ? statusCountsResult.value.data
           : { total: 0, active: 0, pending: 0, inactive: 0, expired: 0 };
 
       // 新規ユーザー数を処理
