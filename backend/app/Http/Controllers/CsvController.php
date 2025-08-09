@@ -836,16 +836,7 @@ class CsvController extends Controller
 
                     // 検索条件を適用（PaginationControllerと同じロジック）
                     if (! empty($filters['q'])) {
-                        $q = $filters['q'];
-                        if (config('database.default') === 'mysql') {
-                            $query->whereFullText(['name', 'email', 'phone_number'], $q);
-                        } else {
-                            $query->where(function ($sub) use ($q) {
-                                $sub->where('name', 'like', "%{$q}%")
-                                    ->orWhere('email', 'like', "%{$q}%")
-                                    ->orWhere('phone_number', 'like', "%{$q}%");
-                            });
-                        }
+                        $query->search($filters['q']);
                     }
 
                     // ステータスフィルタ

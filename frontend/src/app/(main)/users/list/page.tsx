@@ -11,7 +11,7 @@ import {
   deleteUser,
 } from "@/lib/api/users";
 import Link from "next/link";
-import { User } from "@/lib/api/users";
+import { User } from "@/types/user";
 import { SearchField } from "@/components/SearchField";
 import { Button, Alert } from "@/components/ui";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
@@ -134,7 +134,7 @@ function UserListContent() {
   // ステータスカウントを取得する関数
   const loadStatusCounts = useCallback(async () => {
     try {
-      const counts = await fetchStatusCounts({ q: searchQuery || undefined });
+      const { data: counts } = await fetchStatusCounts({ q: searchQuery || undefined });
       setStatusCounts(counts);
     } catch (err) {
       console.error("Failed to load status counts:", err);
@@ -175,15 +175,19 @@ function UserListContent() {
         }
 
         const res = await fetchUsers(params);
-
-        // サーバーサイドページネーションのレスポンスを処理
-        if (res?.data) {
-          setUsers(res.data);
-          setMeta(res.meta);
-        } else {
-          // 古い形式のレスポンスの場合
-          setUsers(res || []);
-        }
+        setUsers(res.data);
+        setMeta(
+          res.meta
+            ? {
+                total: res.meta.total,
+                current_page: res.meta.current_page,
+                per_page: res.meta.per_page,
+                last_page: res.meta.last_page,
+                from: res.meta.from ?? null,
+                to: res.meta.to ?? null,
+              }
+            : null
+        );
         setError(null);
       } catch (err) {
         setError("ユーザーデータの取得に失敗しました。");
@@ -430,10 +434,19 @@ function UserListContent() {
           created: filters.created?.[0],
         });
 
-        if (res?.data) {
-          setUsers(res.data);
-          setMeta(res.meta);
-        }
+        setUsers(res.data);
+        setMeta(
+          res.meta
+            ? {
+                total: res.meta.total,
+                current_page: res.meta.current_page,
+                per_page: res.meta.per_page,
+                last_page: res.meta.last_page,
+                from: res.meta.from ?? null,
+                to: res.meta.to ?? null,
+              }
+            : null
+        );
       } else {
         // バルク削除
         const params = prepareBulkParams();
@@ -451,10 +464,19 @@ function UserListContent() {
           created: filters.created?.[0],
         });
 
-        if (res?.data) {
-          setUsers(res.data);
-          setMeta(res.meta);
-        }
+        setUsers(res.data);
+        setMeta(
+          res.meta
+            ? {
+                total: res.meta.total,
+                current_page: res.meta.current_page,
+                per_page: res.meta.per_page,
+                last_page: res.meta.last_page,
+                from: res.meta.from ?? null,
+                to: res.meta.to ?? null,
+              }
+            : null
+        );
       }
 
       // ステータスカウントも更新

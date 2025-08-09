@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useCallback, memo } from "react";
 import Link from "next/link";
-import { User } from "@/lib/api/users";
+import { User } from "@/types/user";
 import { Badge } from "@/components/ui";
 import { cn } from "@/lib/utils";
 

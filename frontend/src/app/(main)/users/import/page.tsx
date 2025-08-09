@@ -3,6 +3,8 @@
 import { useState, useRef, lazy, Suspense } from "react";
 import Link from "next/link";
 import { importUsers, downloadSampleCSV, checkDuplicates } from "@/lib/api/users";
+import { isApiError } from "@/types/api";
+import { highlightText } from "@/lib/highlight";
 import {
   Button,
   Card,
@@ -115,6 +117,11 @@ interface DuplicateDetails {
     email: string;
     phone_number?: string;
   }>;
+}
+
+interface DuplicateCheckResult {
+  analysis: DuplicateAnalysis;
+  details: DuplicateDetails;
 }
 
 export default function ImportUsersPage() {
@@ -285,7 +292,7 @@ export default function ImportUsersPage() {
     setError(null);
 
     try {
-      const result = await checkDuplicates(file);
+      const { data: result } = await checkDuplicates<DuplicateCheckResult>(file);
       setDuplicateAnalysis(result.analysis);
       setDuplicateDetails(result.details);
 
@@ -296,7 +303,10 @@ export default function ImportUsersPage() {
       setCurrentStep(3);
     } catch (err: unknown) {
       console.error("Duplicate check error:", err);
-      setError("重複チェック中にエラーが発生しました。ネットワーク接続を確認してください。");
+      const message = isApiError(err)
+        ? err.message
+        : "重複チェック中にエラーが発生しました。ネットワーク接続を確認してください。";
+      setError(message);
     } finally {
       setCheckingDuplicates(false);
     }
@@ -364,7 +374,7 @@ export default function ImportUsersPage() {
       setSuccess(null);
       setImportResult(null);
 
-      const result = await importUsers(file, importStrategy);
+      const { data: result } = await importUsers<ImportResult>(file, importStrategy);
 
       setImportResult(result);
 
@@ -384,7 +394,7 @@ export default function ImportUsersPage() {
             );
           }
         } else {
-          setSuccess(result.message);
+          setSuccess(result.message ?? null);
         }
       }
 
@@ -392,16 +402,15 @@ export default function ImportUsersPage() {
     } catch (err: unknown) {
       console.error("Import error:", err);
 
-      if (err && typeof err === "object" && "response" in err) {
-        const errorWithResponse = err as { response?: { status?: number } };
-        if (errorWithResponse.response?.status === 422) {
+      if (isApiError(err)) {
+        if (err.code === 422) {
           setError("入力データに問題があります。CSVファイルの内容を確認してください。");
-        } else if (errorWithResponse.response?.status) {
+        } else if (err.code) {
           setError(
-            `サーバーエラーが発生しました。しばらく時間をおいて再度お試しください。（エラーコード: ${errorWithResponse.response.status}）`
+            `サーバーエラーが発生しました。しばらく時間をおいて再度お試しください。（エラーコード: ${err.code}）`
           );
         } else {
-          setError("インポート処理中にエラーが発生しました。");
+          setError(err.message);
         }
       } else {
         setError("インポート処理中にエラーが発生しました。ネットワーク接続を確認してください。");
@@ -745,17 +754,7 @@ export default function ImportUsersPage() {
                                 <TableHead className="w-16">#</TableHead>
                                 {csvPreview.headers.map((header, index) => (
                                   <TableHead key={index}>
-                                    {header}
-                                    {searchQuery && (
-                                      <span
-                                        dangerouslySetInnerHTML={{
-                                          __html: header.replace(
-                                            new RegExp(`(${searchQuery})`, "gi"),
-                                            '<mark class="bg-yellow-200 dark:bg-yellow-800">$1</mark>'
-                                          ),
-                                        }}
-                                      />
-                                    )}
+                                    {highlightText(header, searchQuery)}
                                   </TableHead>
                                 ))}
                               </TableRow>
@@ -773,18 +772,7 @@ export default function ImportUsersPage() {
                                     </TableCell>
                                     {row.map((cell, cellIndex) => (
                                       <TableCell key={cellIndex}>
-                                        {searchQuery ? (
-                                          <span
-                                            dangerouslySetInnerHTML={{
-                                              __html: cell.replace(
-                                                new RegExp(`(${searchQuery})`, "gi"),
-                                                '<mark class="bg-yellow-200 dark:bg-yellow-800">$1</mark>'
-                                              ),
-                                            }}
-                                          />
-                                        ) : (
-                                          cell
-                                        )}
+                                        {highlightText(cell, searchQuery)}
                                       </TableCell>
                                     ))}
                                   </TableRow>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class PaginationController extends Controller
@@ -24,10 +25,13 @@ class PaginationController extends Controller
         // キャッシュキーの生成
         $cacheKey = 'pagination:'.md5(serialize($validated));
 
-        // タグ付きキャッシュから取得を試みる（5分間）
-        $data = Cache::tags(['users', 'pagination'])->remember($cacheKey, 300, function () use ($validated) {
-            return $this->getPaginatedData($validated);
-        });
+        $data = $this->rememberWithMetrics(
+            $cacheKey,
+            ['users', 'pagination'],
+            300,
+            $request,
+            fn () => $this->getPaginatedData($validated)
+        );
 
         return response()->json($data);
     }
@@ -46,17 +50,7 @@ class PaginationController extends Controller
 
         // 検索条件（フルテキスト検索を優先）
         if ($q !== null && $q !== '') {
-            if (config('database.default') === 'mysql') {
-                // MySQLの場合はフルテキスト検索を使用
-                $query->whereFullText(['name', 'email', 'phone_number'], $q);
-            } else {
-                // SQLite等の場合はLIKE検索（開発・テスト環境用）
-                $query->where(function ($sub) use ($q) {
-                    $sub->where('name', 'like', "%{$q}%")
-                        ->orWhere('email', 'like', "%{$q}%")
-                        ->orWhere('phone_number', 'like', "%{$q}%");
-                });
-            }
+            $query->search($q);
         }
 
         // ステータスフィルタ（複数対応）
@@ -122,10 +116,13 @@ class PaginationController extends Controller
         // キャッシュキーの生成
         $cacheKey = 'status_counts:'.md5(serialize($validated));
 
-        // タグ付きキャッシュから取得を試みる（5分間）
-        $counts = Cache::tags(['users', 'status_counts'])->remember($cacheKey, 300, function () use ($validated) {
-            return $this->getStatusCounts($validated);
-        });
+        $counts = $this->rememberWithMetrics(
+            $cacheKey,
+            ['users', 'status_counts'],
+            300,
+            $request,
+            fn () => $this->getStatusCounts($validated)
+        );
 
         return response()->json($counts);
     }
@@ -137,17 +134,7 @@ class PaginationController extends Controller
 
         // 検索条件がある場合は適用（フルテキスト検索を優先）
         if ($q !== null && $q !== '') {
-            if (config('database.default') === 'mysql') {
-                // MySQLの場合はフルテキスト検索を使用
-                $baseQuery->whereFullText(['name', 'email', 'phone_number'], $q);
-            } else {
-                // SQLite等の場合はLIKE検索（開発・テスト環境用）
-                $baseQuery->where(function ($sub) use ($q) {
-                    $sub->where('name', 'like', "%{$q}%")
-                        ->orWhere('email', 'like', "%{$q}%")
-                        ->orWhere('phone_number', 'like', "%{$q}%");
-                });
-            }
+            $baseQuery->search($q);
         }
 
         // 各ステータスのカウントを取得
@@ -158,5 +145,36 @@ class PaginationController extends Controller
             'expired' => (clone $baseQuery)->where('membership_status', 'expired')->count(),
             'total' => (clone $baseQuery)->count(),
         ];
+    }
+
+    private function rememberWithMetrics(string $cacheKey, array $tags, int $ttl, Request $request, callable $callback)
+    {
+        $cache = Cache::tags($tags);
+
+        if ($cache->has($cacheKey)) {
+            $start = microtime(true);
+            $data = $cache->get($cacheKey);
+            $responseTime = microtime(true) - $start;
+            Cache::increment('metrics:cache_hit');
+            Log::info('Cache hit', [
+                'key' => $cacheKey,
+                'endpoint' => $request->path(),
+                'response_time' => $responseTime,
+            ]);
+
+            return $data;
+        }
+
+        $start = microtime(true);
+        $data = $cache->remember($cacheKey, $ttl, $callback);
+        $queryTime = microtime(true) - $start;
+        Cache::increment('metrics:cache_miss');
+        Log::info('Cache miss', [
+            'key' => $cacheKey,
+            'endpoint' => $request->path(),
+            'query_time' => $queryTime,
+        ]);
+
+        return $data;
     }
 }
