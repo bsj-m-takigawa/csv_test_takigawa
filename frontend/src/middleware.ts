@@ -12,12 +12,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // ホームページのみ認証不要（ランディングページとして）
-  if (pathname === "/") {
-    return NextResponse.next();
-  }
-
-  // それ以外の全てのページ（ユーザー一覧、詳細、編集など）は認証必須
+  // 全てのページ（ホームページを含む）で認証必須
   // PII保護のため、ユーザー情報の閲覧も認証が必要
   const token = request.cookies.get("auth_token")?.value;
 
@@ -30,16 +25,26 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // トークンの厳密な検証（英数40文字以上）
-  const tokenPattern = /^[A-Za-z0-9]{40,}$/;
-  if (!tokenPattern.test(token)) {
+  // トークンの基本的な検証（英数字とハイフン、アンダースコア、ピリオドを許可）
+  // Laravel Sanctumのトークンは通常、数字とハイフンを含む
+  const tokenPattern = /^[A-Za-z0-9\-_.|]+$/;
+  if (!tokenPattern.test(token) || token.length < 20) {
     // 不正なトークンの場合もログインページへ
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  return NextResponse.next();
+  // キャッシュ制御ヘッダーを追加してブラウザバック時の問題を防ぐ
+  const response = NextResponse.next();
+
+  // 認証が必要なページはキャッシュしない
+  response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("Expires", "0");
+  response.headers.set("Surrogate-Control", "no-store");
+
+  return response;
 }
 
 export const config = {

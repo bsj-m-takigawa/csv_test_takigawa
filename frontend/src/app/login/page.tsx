@@ -46,8 +46,20 @@ function LoginForm() {
       if (data.token) {
         // XSS対策: localStorageではなくsessionStorageを使用
         sessionStorage.setItem("auth_token", data.token);
-        // クッキーにも保存（ミドルウェアで使用）- HttpOnlyが理想だがNext.jsミドルウェアのため通常のクッキー
-        document.cookie = `auth_token=${data.token}; path=/; SameSite=Strict; Secure`;
+
+        // クッキーにも保存（ミドルウェアで使用）
+        // 開発環境（HTTP）と本番環境（HTTPS）の両方に対応
+        const isSecure = window.location.protocol === "https:";
+        const cookieOptions = [
+          `auth_token=${data.token}`,
+          "path=/",
+          "SameSite=Lax", // Strictだとリダイレクト時に問題が起きる可能性
+          isSecure ? "Secure" : "",
+        ]
+          .filter(Boolean)
+          .join("; ");
+
+        document.cookie = cookieOptions;
 
         // URL Injection対策: 安全なリダイレクト関数を使用
         safeRedirect(returnUrl, "/");

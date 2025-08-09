@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { fetchStatusCounts, fetchUsers } from "@/lib/api/users";
+import { isAuthenticated } from "@/lib/api/auth";
 
 // タップ時の触覚フィードバック（モバイル）
 const triggerHapticFeedback = () => {
@@ -23,6 +25,7 @@ interface DashboardStats {
 }
 
 export default function Home() {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
@@ -36,9 +39,15 @@ export default function Home() {
   });
 
   useEffect(() => {
+    // クライアントサイドで認証チェック
+    if (!isAuthenticated()) {
+      router.replace("/login");
+      return;
+    }
+
     setMounted(true);
     loadDashboardData();
-  }, []);
+  }, [router]);
 
   const loadDashboardData = async () => {
     try {
@@ -143,7 +152,8 @@ export default function Home() {
     },
   ];
 
-  if (!mounted) return null;
+  // 認証チェック中またはマウント前は何も表示しない
+  if (!mounted || !isAuthenticated()) return null;
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">

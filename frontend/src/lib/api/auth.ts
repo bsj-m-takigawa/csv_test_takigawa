@@ -29,10 +29,22 @@ export function getAuthHeaders(): Record<string, string> {
  */
 export function logout(): void {
   if (typeof window !== "undefined") {
+    // セッションストレージからトークンを削除
     sessionStorage.removeItem("auth_token");
-    // クッキーも削除
-    document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict";
-    window.location.href = "/login";
+
+    // クッキーも削除（SameSiteをLaxに変更してナビゲーション互換性を改善）
+    document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax";
+
+    // キャッシュをクリアしてから強制的にリダイレクト
+    // これによりブラウザバックで古いページが表示されるのを防ぐ
+    if ("caches" in window) {
+      caches.keys().then((names) => {
+        names.forEach((name) => caches.delete(name));
+      });
+    }
+
+    // 履歴を置き換えてからリダイレクト（ブラウザバックを防ぐ）
+    window.location.replace("/login");
   }
 }
 
