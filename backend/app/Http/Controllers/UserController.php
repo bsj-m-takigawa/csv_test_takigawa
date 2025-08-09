@@ -269,17 +269,17 @@ class UserController extends Controller
     }
 
     /**
-     * ページネーションキャッシュをクリアする
+     * ユーザー関連のキャッシュをクリアする
+     * タグベースキャッシュを使用して、ユーザー関連のキャッシュのみを削除
      */
     private function clearPaginationCache()
     {
         try {
-            // シンプルにすべてのキャッシュをクリア
-            // 実際のアプリケーションでは、より精密な制御が必要
-            Cache::flush();
-            Log::info('All cache cleared after user operation');
+            // ユーザー関連のキャッシュのみをクリア
+            Cache::tags(['users'])->flush();
+            Log::info('User-related cache cleared after user operation');
         } catch (\Exception $e) {
-            Log::warning('Failed to clear cache', ['error' => $e->getMessage()]);
+            Log::warning('Failed to clear user cache', ['error' => $e->getMessage()]);
         }
     }
 }

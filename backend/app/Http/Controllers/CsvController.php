@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -319,6 +320,10 @@ class CsvController extends Controller
             if ($errorCount > 0) {
                 $message[] = "{$errorCount}件でエラー発生";
             }
+
+            // CSVインポート成功後にユーザー関連のキャッシュをクリア
+            Cache::tags(['users'])->flush();
+            Log::info('User cache cleared after CSV import');
 
             return response()->json([
                 'success' => true,
