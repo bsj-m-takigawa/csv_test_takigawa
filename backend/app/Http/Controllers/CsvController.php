@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -192,10 +194,11 @@ class CsvController extends Controller
                         }
 
                         // ユーザーデータの準備（パフォーマンス最適化）
-                        // デフォルトパスワードを事前ハッシュ化して再利用
+                        // デフォルトパスワードは強力なランダム値を生成
                         static $defaultPasswordHash = null;
                         if ($defaultPasswordHash === null) {
-                            $defaultPasswordHash = bcrypt('password123');
+                            $defaultPasswordHash = Hash::make(Str::random(32));
+                            Log::info('Generated random default password for CSV import');
                         }
 
                         $now = now();
@@ -231,7 +234,6 @@ class CsvController extends Controller
                         $userAttributes = [
                             'name' => $userData['name'] ?? '',
                             'email' => $email,
-                            'password' => isset($userData['password']) ? bcrypt($userData['password']) : $defaultPasswordHash,
                             'phone_number' => $phoneNumber,
                             'address' => $address,
                             'birth_date' => $birthDate,
@@ -245,13 +247,25 @@ class CsvController extends Controller
                             'updated_at' => $updatedAt,
                         ];
 
+                        // パスワード処理
+                        $passwordHash = $this->handlePasswordForUser($userData, $isNew, $defaultPasswordHash);
+
                         if ($isNew) {
+                            // 新規ユーザーの場合、パスワードは必須
+                            $userAttributes['password'] = $passwordHash;
                             $usersToCreate[] = $userAttributes;
                             $importedCount++;
                         } else {
                             // 更新用の属性をコピー（created_atは除外）
                             $updateAttributes = $userAttributes;
                             unset($updateAttributes['created_at']); // 更新時はcreated_atは変更しない
+
+                            // 既存ユーザーのパスワードは明示的に値がある場合のみ更新
+                            if ($passwordHash !== null) {
+                                $updateAttributes['password'] = $passwordHash;
+                            }
+                            // パスワードがnullの場合は更新しない
+
                             User::where('id', $existingUser->id)->update($updateAttributes);
                             $updatedCount++;
                         }
@@ -925,5 +939,31 @@ class CsvController extends Controller
         $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
 
         return $response;
+    }
+
+    /**
+     * ユーザーのパスワード処理をハンドル
+     *
+     * @param  array  $userData  CSVからのユーザーデータ
+     * @param  bool  $isNew  新規ユーザーかどうか
+     * @param  string  $defaultPasswordHash  デフォルトパスワードのハッシュ
+     * @return string|null パスワードハッシュまたはnull
+     */
+    private function handlePasswordForUser(array $userData, bool $isNew, string $defaultPasswordHash): ?string
+    {
+        // パスワードが設定されていて、空白でない場合（trimで空白文字を除去）
+        $hasPassword = isset($userData['password']) && trim($userData['password']) !== '';
+
+        if ($isNew) {
+            // 新規ユーザー：パスワードがあれば使用、なければデフォルト
+            return $hasPassword
+                ? Hash::make(trim($userData['password']))
+                : $defaultPasswordHash;
+        }
+
+        // 既存ユーザー：パスワードがある場合のみ更新、なければnull
+        return $hasPassword
+            ? Hash::make(trim($userData['password']))
+            : null;
     }
 }
