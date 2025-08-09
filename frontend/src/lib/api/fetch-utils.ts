@@ -2,8 +2,8 @@
  * Fetch APIのユーティリティ関数
  */
 
-import { getAuthHeaders } from './auth';
-import { handleAuthError } from './auth-utils';
+import { getAuthHeaders } from "./auth";
+import { handleAuthError } from "./auth-utils";
 
 /**
  * 認証ヘッダー付きのfetchラッパー
@@ -11,12 +11,9 @@ import { handleAuthError } from './auth-utils';
  * @param options リクエストオプション
  * @returns レスポンス
  */
-export async function fetchWithAuth(
-  url: string,
-  options: RequestInit = {}
-): Promise<Response> {
+export async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
   const authHeaders = getAuthHeaders();
-  
+
   const response = await fetch(url, {
     ...options,
     headers: {
@@ -59,7 +56,7 @@ export async function handleErrorResponse(
   customMessage?: string
 ): Promise<never> {
   let errorMessage = customMessage || `HTTP ${response.status}: ${response.statusText}`;
-  
+
   try {
     const contentType = response.headers.get("content-type");
     if (contentType && contentType.includes("application/json")) {
@@ -73,7 +70,7 @@ export async function handleErrorResponse(
   const error = new Error(errorMessage) as Error & {
     response?: { status: number; data: string | null };
   };
-  
+
   error.response = {
     status: response.status,
     data: await response.text().catch(() => null),

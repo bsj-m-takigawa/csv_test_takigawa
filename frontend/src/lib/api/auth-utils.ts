@@ -9,34 +9,27 @@
  */
 export function isValidReturnUrl(url: string): boolean {
   if (!url) return false;
-  
+
   // 相対パスのみ許可（絶対URLやプロトコル相対URLは拒否）
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('//')) {
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("//")) {
     return false;
   }
-  
+
   // パスは'/'で始まる必要がある
-  if (!url.startsWith('/')) {
+  if (!url.startsWith("/")) {
     return false;
   }
-  
+
   // 危険な文字列のチェック
-  const dangerousPatterns = [
-    'javascript:',
-    'data:',
-    'vbscript:',
-    'file:',
-    '<script',
-    '%3Cscript',
-  ];
-  
+  const dangerousPatterns = ["javascript:", "data:", "vbscript:", "file:", "<script", "%3Cscript"];
+
   const lowerUrl = url.toLowerCase();
   for (const pattern of dangerousPatterns) {
     if (lowerUrl.includes(pattern)) {
       return false;
     }
   }
-  
+
   return true;
 }
 
@@ -45,13 +38,13 @@ export function isValidReturnUrl(url: string): boolean {
  * @param url リダイレクト先URL
  * @param fallback フォールバックURL（デフォルト: '/'）
  */
-export function safeRedirect(url: string, fallback: string = '/'): void {
+export function safeRedirect(url: string, fallback: string = "/"): void {
   const decodedUrl = decodeURIComponent(url);
-  
+
   if (isValidReturnUrl(decodedUrl)) {
     window.location.href = decodedUrl;
   } else {
-    console.warn('Invalid redirect URL detected, redirecting to fallback:', url);
+    console.warn("Invalid redirect URL detected, redirecting to fallback:", url);
     window.location.href = fallback;
   }
 }
@@ -63,7 +56,7 @@ export function safeRedirect(url: string, fallback: string = '/'): void {
  */
 export function handleAuthError(status: number, currentPath?: string): void {
   if (status === 401 || status === 403) {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const returnUrl = currentPath || window.location.pathname;
       const encodedUrl = encodeURIComponent(returnUrl);
       window.location.href = `/login?returnUrl=${encodedUrl}`;

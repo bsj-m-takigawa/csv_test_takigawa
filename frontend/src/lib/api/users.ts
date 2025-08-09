@@ -1,6 +1,6 @@
-import { getAuthHeaders } from './auth';
-import { handleAuthError } from './auth-utils';
-import { downloadBlob } from './fetch-utils';
+import { getAuthHeaders } from "./auth";
+import { handleAuthError } from "./auth-utils";
+import { downloadBlob } from "./fetch-utils";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
@@ -24,7 +24,7 @@ export interface User {
 // Fetch API helper function
 async function apiFetch(url: string, options: RequestInit = {}) {
   const authHeaders = getAuthHeaders();
-  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+  const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
   const baseHeaders: HeadersInit = isFormData
     ? {} // FormData の場合は Content-Type を自動付与させる
     : { "Content-Type": "application/json" };
@@ -43,7 +43,7 @@ async function apiFetch(url: string, options: RequestInit = {}) {
   if (!response.ok) {
     // 認証エラーの場合はログインページへリダイレクト
     handleAuthError(response.status);
-    
+
     const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
     (error as Error & { response?: { status: number; data: string | null } }).response = {
       status: response.status,
@@ -160,7 +160,7 @@ export const exportUsers = async () => {
       downloadBlob(blob, `users_${new Date().toISOString()}.csv`);
       return true;
     }
-    throw new Error('Unexpected response type for export');
+    throw new Error("Unexpected response type for export");
   } catch (error) {
     console.error("Error exporting users:", error);
     throw error;
@@ -217,7 +217,7 @@ export const bulkExportUsers = async (params: BulkOperationParams) => {
       downloadBlob(blob, filename);
       return true;
     }
-    throw new Error('Unexpected response type for bulk export');
+    throw new Error("Unexpected response type for bulk export");
   } catch (error: unknown) {
     console.error("Error bulk exporting users:", error);
     throw error;
@@ -262,10 +262,10 @@ export const downloadSampleCSV = async () => {
     const resp = await apiFetch(`${API_URL}/users/sample-csv`);
     if (resp instanceof Response) {
       const blob = await resp.blob();
-      downloadBlob(blob, 'sample_users.csv');
+      downloadBlob(blob, "sample_users.csv");
       return true;
     }
-    throw new Error('Unexpected response type for sample CSV');
+    throw new Error("Unexpected response type for sample CSV");
   } catch (error) {
     console.error("Error downloading sample CSV:", error);
     throw error;

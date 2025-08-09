@@ -15,26 +15,29 @@ export async function getCsrfToken(): Promise<string> {
 
   try {
     // Laravel Sanctumの場合、/sanctum/csrf-cookieエンドポイントからトークンを取得
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/sanctum/csrf-cookie`, {
-      credentials: 'include',
-    });
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/sanctum/csrf-cookie`,
+      {
+        credentials: "include",
+      }
+    );
 
     if (response.ok) {
       // クッキーからXSRF-TOKENを取得
-      const cookies = document.cookie.split(';');
+      const cookies = document.cookie.split(";");
       for (const cookie of cookies) {
-        const [name, value] = cookie.trim().split('=');
-        if (name === 'XSRF-TOKEN') {
+        const [name, value] = cookie.trim().split("=");
+        if (name === "XSRF-TOKEN") {
           csrfToken = decodeURIComponent(value);
           return csrfToken;
         }
       }
     }
   } catch (error) {
-    console.error('Failed to fetch CSRF token:', error);
+    console.error("Failed to fetch CSRF token:", error);
   }
 
-  return '';
+  return "";
 }
 
 /**
@@ -44,13 +47,13 @@ export async function getCsrfToken(): Promise<string> {
  */
 export async function addCsrfHeader(headers: HeadersInit = {}): Promise<HeadersInit> {
   const token = await getCsrfToken();
-  
+
   if (token) {
     return {
       ...headers,
-      'X-XSRF-TOKEN': token,
+      "X-XSRF-TOKEN": token,
     };
   }
-  
+
   return headers;
 }

@@ -1,10 +1,6 @@
 import Header from "@/components/Header";
 
-export default function MainLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -17,9 +13,7 @@ export default function MainLayout({
             </p>
             <div className="flex space-x-6 mt-4 md:mt-0">
               <span className="text-sm text-gray-600 dark:text-gray-400">v1.0.0</span>
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                Next.js + Laravel
-              </span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">Next.js + Laravel</span>
             </div>
           </div>
         </div>
