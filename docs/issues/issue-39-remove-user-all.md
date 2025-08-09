@@ -1,4 +1,4 @@
-# Issue #39: User::all()の除去とページネーション強制
+# Issue #39: User::all()の除去とページネーション強制 [CLOSED]
 
 ## 問題の概要
 UserControllerのindexメソッドでUser::all()が使用されており、大量のデータがある場合にメモリ不足を引き起こす可能性があります。
