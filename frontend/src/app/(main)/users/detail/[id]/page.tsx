@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { fetchUser, User, deleteUser } from "../../../../lib/api/users";
+import { fetchUser, User, deleteUser } from "@/lib/api/users";
 import { Button, Card, CardHeader, CardTitle, CardContent, Alert, Badge } from "@/components/ui";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
 

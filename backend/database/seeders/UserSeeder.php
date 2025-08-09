@@ -16,6 +16,26 @@ class UserSeeder extends Seeder
     {
         DB::table('users')->truncate();
 
+        // テスト用の固定ユーザーを作成
+        DB::table('users')->insert([
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+            'phone_number' => '090-1234-5678',
+            'address' => '東京都渋谷区代々木1-1-1',
+            'birth_date' => '1990-01-01',
+            'gender' => 'other',
+            'membership_status' => 'active',
+            'notes' => 'テスト用アカウント',
+            'profile_image' => null,
+            'points' => 1000,
+            'last_login_at' => now(),
+            'remember_token' => Str::random(10),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         $batchSize = 100; // バッチサイズ
         $totalUsers = 1000; // テスト用に1000件に設定（本番環境では100万件）
         $batches = ceil($totalUsers / $batchSize);

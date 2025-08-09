@@ -34,6 +34,17 @@ async function apiFetch(url: string, options: RequestInit = {}) {
   });
 
   if (!response.ok) {
+    // 認証エラーの場合はログインページへリダイレクト
+    if (response.status === 401 || response.status === 403) {
+      if (typeof window !== 'undefined') {
+        // 現在のURLを保存してログイン後に戻れるようにする
+        const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.href = `/login?returnUrl=${returnUrl}`;
+        // リダイレクト中は処理を停止
+        return new Promise(() => {});
+      }
+    }
+    
     const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
     (error as Error & { response?: { status: number; data: string | null } }).response = {
       status: response.status,
@@ -131,8 +142,10 @@ export const importUsers = async (
     formData.append("csv_file", file);
     formData.append("import_strategy", importStrategy);
 
+    const authHeaders = getAuthHeaders();
     const response = await fetch(`${API_URL}/users/import`, {
       method: "POST",
+      headers: authHeaders,
       body: formData,
     });
 
@@ -173,9 +186,20 @@ export const importUsers = async (
 
 export const exportUsers = async () => {
   try {
-    const response = await fetch(`${API_URL}/users/export-fast`);
+    const authHeaders = getAuthHeaders();
+    const response = await fetch(`${API_URL}/users/export`, {
+      headers: authHeaders,
+    });
 
     if (!response.ok) {
+      // 認証エラーの場合はログインページへリダイレクト
+      if (response.status === 401 || response.status === 403) {
+        if (typeof window !== 'undefined') {
+          const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+          window.location.href = `/login?returnUrl=${returnUrl}`;
+          return false;
+        }
+      }
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
@@ -229,7 +253,7 @@ export const bulkExportUsers = async (params: BulkOperationParams) => {
   try {
     // 認証ヘッダーを含むfetchを直接使用（blobレスポンスのため）
     const authHeaders = getAuthHeaders();
-    const response = await fetch(`${API_URL}/users/bulk-export-fast`, {
+    const response = await fetch(`${API_URL}/users/bulk-export`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -239,6 +263,14 @@ export const bulkExportUsers = async (params: BulkOperationParams) => {
     });
 
     if (!response.ok) {
+      // 認証エラーの場合はログインページへリダイレクト
+      if (response.status === 401 || response.status === 403) {
+        if (typeof window !== 'undefined') {
+          const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+          window.location.href = `/login?returnUrl=${returnUrl}`;
+          return false;
+        }
+      }
       const errorData = await response.json();
       throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
     }
@@ -337,7 +369,10 @@ export const checkDuplicates = async (file: File) => {
 
 export const downloadSampleCSV = async () => {
   try {
-    const response = await fetch(`${API_URL}/users/sample-csv`);
+    const authHeaders = getAuthHeaders();
+    const response = await fetch(`${API_URL}/users/sample-csv`, {
+      headers: authHeaders,
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);

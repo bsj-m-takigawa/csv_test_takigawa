@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { fetchStatusCounts, fetchUsers } from "../lib/api/users";
+import { fetchStatusCounts, fetchUsers } from "@/lib/api/users";
 
 // タップ時の触覚フィードバック（モバイル）
 const triggerHapticFeedback = () => {

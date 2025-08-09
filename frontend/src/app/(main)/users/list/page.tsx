@@ -9,9 +9,9 @@ import {
   bulkExportUsers,
   BulkOperationParams,
   deleteUser,
-} from "../../../lib/api/users";
+} from "@/lib/api/users";
 import Link from "next/link";
-import { User } from "../../../lib/api/users";
+import { User } from "@/lib/api/users";
 import { SearchField } from "@/components/SearchField";
 import { Button, Alert } from "@/components/ui";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";

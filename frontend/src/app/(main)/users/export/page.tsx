@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { exportUsers } from "../../../lib/api/users";
+import { exportUsers } from "@/lib/api/users";
 import {
   Button,
   Card,
