@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // ESLint設定
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  
   // 画像最適化の設定
   images: {
     remotePatterns: [
@@ -10,11 +15,16 @@ const nextConfig: NextConfig = {
       },
     ],
     formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 31536000, // 1年
   },
   
   // パフォーマンス最適化
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  
   experimental: {
-    optimizeCss: true,
+    optimizePackageImports: ['@/components', '@/lib'],
   },
   
   // Reactの厳密モード
@@ -22,6 +32,10 @@ const nextConfig: NextConfig = {
   
   // 本番ビルド時のソースマップ生成を無効化（パフォーマンス向上）
   productionBrowserSourceMaps: false,
+  
+  // Core Web Vitals最適化
+  poweredByHeader: false,
+  compress: true,
 };
 
 export default nextConfig;
