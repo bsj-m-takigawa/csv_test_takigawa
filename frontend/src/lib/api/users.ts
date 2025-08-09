@@ -1,4 +1,4 @@
-import { getAuthHeaders } from './auth';
+import { getAuthHeaders } from "./auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
@@ -25,9 +25,9 @@ async function apiFetch(url: string, options: RequestInit = {}) {
   const headers: HeadersInit = {
     "Content-Type": "application/json",
     ...authHeaders,
-    ...(options.headers as Record<string, string> || {}),
+    ...((options.headers as Record<string, string>) || {}),
   };
-  
+
   const response = await fetch(url, {
     ...options,
     headers,
@@ -173,7 +173,7 @@ export const importUsers = async (
 
 export const exportUsers = async () => {
   try {
-    const response = await fetch(`${API_URL}/users/export-fast`);
+    const response = await fetch(`${API_URL}/users/export`);
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -209,8 +209,6 @@ export interface BulkOperationParams {
 
 export const bulkDeleteUsers = async (params: BulkOperationParams) => {
   try {
-    console.log("Bulk delete params:", params); // デバッグ用
-
     // apiFetchヘルパーを使用して認証ヘッダーを自動付与
     const response = await apiFetch(`${API_URL}/users/bulk-delete`, {
       method: "POST",
@@ -229,7 +227,7 @@ export const bulkExportUsers = async (params: BulkOperationParams) => {
   try {
     // 認証ヘッダーを含むfetchを直接使用（blobレスポンスのため）
     const authHeaders = getAuthHeaders();
-    const response = await fetch(`${API_URL}/users/bulk-export-fast`, {
+    const response = await fetch(`${API_URL}/users/bulk-export`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
