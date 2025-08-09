@@ -16,7 +16,7 @@ class Authenticate extends Middleware
         if ($request->expectsJson() || $request->is('api/*')) {
             return null;
         }
-        
+
         // Webリクエストの場合のみリダイレクト（ただしloginルートは定義されていない）
         return null;
     }

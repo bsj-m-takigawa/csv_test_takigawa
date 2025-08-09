@@ -1,10 +1,10 @@
 "use client";
 
 import { Suspense, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { safeRedirect } from '@/lib/api/auth-utils';
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,15 +38,16 @@ function LoginForm() {
 
       const data = await response.json();
       
-      // トークンをローカルストレージとクッキーに保存
+      // トークンをセッションストレージとクッキーに保存
       // Laravel Sanctumは'token'キーでトークンを返す
       if (data.token) {
-        localStorage.setItem('auth_token', data.token);
-        // クッキーにも保存（ミドルウェアで使用）
-        document.cookie = `auth_token=${data.token}; path=/; max-age=86400; SameSite=Strict`;
+        // XSS対策: localStorageではなくsessionStorageを使用
+        sessionStorage.setItem('auth_token', data.token);
+        // クッキーにも保存（ミドルウェアで使用）- HttpOnlyが理想だがNext.jsミドルウェアのため通常のクッキー
+        document.cookie = `auth_token=${data.token}; path=/; SameSite=Strict; Secure`;
         
-        // リダイレクト
-        window.location.href = decodeURIComponent(returnUrl);
+        // URL Injection対策: 安全なリダイレクト関数を使用
+        safeRedirect(returnUrl, '/');
       } else {
         setError('認証トークンが取得できませんでした');
       }

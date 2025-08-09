@@ -11,8 +11,7 @@ class AuthController extends Controller
 {
     /**
      * ログイン処理
-     * 
-     * @param Request $request
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function login(Request $request)
@@ -28,7 +27,7 @@ class AuthController extends Controller
         // タイミング攻撃対策：ユーザーが存在しない場合でも同等の計算時間を確保
         // bcryptのデフォルトハッシュを使用（Laravelのデフォルトパスワード）
         $dummyHash = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi';
-        
+
         // ユーザーが存在する場合は実際のハッシュ、存在しない場合はダミーハッシュで検証
         $hashToCheck = $user ? $user->password : $dummyHash;
         $isValidPassword = Hash::check($request->password, $hashToCheck);
@@ -50,8 +49,7 @@ class AuthController extends Controller
 
     /**
      * ログアウト処理
-     * 
-     * @param Request $request
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function logout(Request $request)
@@ -65,8 +63,7 @@ class AuthController extends Controller
 
     /**
      * 現在のユーザー情報取得
-     * 
-     * @param Request $request
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function me(Request $request)

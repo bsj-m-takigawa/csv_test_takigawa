@@ -24,7 +24,7 @@ class UserPaginationTest extends TestCase
             ->assertJsonStructure([
                 'current_page',
                 'data' => [
-                    '*' => ['id', 'name', 'email']
+                    '*' => ['id', 'name', 'email'],
                 ],
                 'per_page',
                 'total',
@@ -108,14 +108,14 @@ class UserPaginationTest extends TestCase
         User::factory(1000)->create();
 
         $startMemory = memory_get_usage();
-        
+
         $response = $this->getJson('/api/users?per_page=50');
-        
+
         $endMemory = memory_get_usage();
         $memoryUsed = ($endMemory - $startMemory) / 1024 / 1024; // MB単位
 
         $response->assertStatus(200);
-        
+
         // メモリ使用量が適切な範囲内であることを確認
         // ページネーションにより、全データを読み込まないため、メモリ使用量は少ない
         $this->assertLessThan(50, $memoryUsed, 'Memory usage should be less than 50MB for paginated results');

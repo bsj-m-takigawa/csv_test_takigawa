@@ -1,13 +1,14 @@
 // 認証関連のユーティリティ関数
 
 /**
- * ローカルストレージから認証トークンを取得
+ * セッションストレージから認証トークンを取得
+ * XSS攻撃のリスク軽減のためlocalStorageではなくsessionStorageを使用
  */
 export function getAuthToken(): string | null {
   if (typeof window === 'undefined') {
     return null;
   }
-  return localStorage.getItem('auth_token');
+  return sessionStorage.getItem('auth_token');
 }
 
 /**
@@ -28,7 +29,7 @@ export function getAuthHeaders(): Record<string, string> {
  */
 export function logout(): void {
   if (typeof window !== 'undefined') {
-    localStorage.removeItem('auth_token');
+    sessionStorage.removeItem('auth_token');
     // クッキーも削除
     document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict';
     window.location.href = '/login';

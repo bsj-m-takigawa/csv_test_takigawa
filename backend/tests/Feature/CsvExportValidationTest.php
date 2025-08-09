@@ -37,7 +37,7 @@ class CsvExportValidationTest extends TestCase
 
         foreach ($validStatuses as $status) {
             $response = $this->get("/api/users/export?status={$status}");
-            
+
             $response->assertStatus(200);
             $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
         }
@@ -68,19 +68,19 @@ class CsvExportValidationTest extends TestCase
         $response = $this->get('/api/users/export');
 
         $response->assertStatus(200);
-        
+
         $content = $response->streamedContent();
         $lines = explode("\n", $content);
-        
+
         // BOMを除去してヘッダー行を確認
         $firstLine = ltrim($lines[0], "\xEF\xBB\xBF");
-        
+
         $expectedHeaders = [
             'ID', '名前', 'メールアドレス', '電話番号', '住所',
             '生年月日', '性別', '会員状態', 'メモ', 'プロフィール画像',
-            'ポイント', '最終ログイン', '作成日', '更新日'
+            'ポイント', '最終ログイン', '作成日', '更新日',
         ];
-        
+
         $actualHeaders = str_getcsv($firstLine);
         $this->assertEquals($expectedHeaders, $actualHeaders);
     }
@@ -98,10 +98,10 @@ class CsvExportValidationTest extends TestCase
         $response = $this->get('/api/users/export?status=active');
 
         $response->assertStatus(200);
-        
+
         $content = $response->streamedContent();
         $lines = array_filter(explode("\n", $content)); // 空行を除去
-        
+
         // ヘッダー行 + active状態のユーザー3件 = 4行
         $this->assertCount(4, $lines);
     }

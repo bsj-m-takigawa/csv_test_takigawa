@@ -32,7 +32,16 @@ export function middleware(request: NextRequest) {
     // 未認証の場合はログインページへリダイレクト
     const url = request.nextUrl.clone();
     url.pathname = '/login';
-    url.searchParams.set('returnUrl', pathname);
+    // URL Injection対策: パス名のみを保存（クエリパラメータは除外）
+    url.searchParams.set('returnUrl', encodeURIComponent(pathname));
+    return NextResponse.redirect(url);
+  }
+  
+  // トークンの基本的な検証（長さチェック）
+  if (token.length < 40) {
+    // 不正なトークンの場合もログインページへ
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
     return NextResponse.redirect(url);
   }
 
