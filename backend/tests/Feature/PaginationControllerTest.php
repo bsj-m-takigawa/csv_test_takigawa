@@ -24,7 +24,7 @@ class PaginationControllerTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonStructure([
                 'data' => [
-                    '*' => ['id', 'name', 'email']
+                    '*' => ['id', 'name', 'email'],
                 ],
                 'meta' => [
                     'current_page',

@@ -1,4 +1,6 @@
 import { getAuthHeaders } from './auth';
+import { handleAuthError } from './auth-utils';
+import { downloadBlob } from './fetch-utils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
@@ -22,18 +24,26 @@ export interface User {
 // Fetch API helper function
 async function apiFetch(url: string, options: RequestInit = {}) {
   const authHeaders = getAuthHeaders();
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+  const baseHeaders: HeadersInit = isFormData
+    ? {} // FormData の場合は Content-Type を自動付与させる
+    : { "Content-Type": "application/json" };
+
   const headers: HeadersInit = {
-    "Content-Type": "application/json",
+    ...baseHeaders,
     ...authHeaders,
-    ...(options.headers as Record<string, string> || {}),
+    ...((options.headers as Record<string, string>) || {}),
   };
-  
+
   const response = await fetch(url, {
     ...options,
     headers,
   });
 
   if (!response.ok) {
+    // 認証エラーの場合はログインページへリダイレクト
+    handleAuthError(response.status);
+    
     const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
     (error as Error & { response?: { status: number; data: string | null } }).response = {
       status: response.status,
@@ -131,64 +141,26 @@ export const importUsers = async (
     formData.append("csv_file", file);
     formData.append("import_strategy", importStrategy);
 
-    const response = await fetch(`${API_URL}/users/import`, {
+    // apiFetch で認証・エラー処理を統一
+    return await apiFetch(`${API_URL}/users/import`, {
       method: "POST",
       body: formData,
     });
-
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => null);
-      const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
-      (error as Error & { response?: { status: number; data: string | null } }).response = {
-        status: response.status,
-        data: errorText,
-      };
-      throw error;
-    }
-
-    return response.json();
   } catch (error) {
     console.error("Error importing users:", error);
-
-    // 詳細エラー情報をログ出力
-    if (error && typeof error === "object" && "response" in error) {
-      const errorWithResponse = error as { response?: { status?: number; data?: unknown } };
-      console.error("Response status:", errorWithResponse.response?.status);
-      console.error("Response data:", errorWithResponse.response?.data);
-
-      // エラーレスポンスに詳細情報を含める
-      const enhancedError = {
-        message: error instanceof Error ? error.message : "Unknown error",
-        details: errorWithResponse.response?.data || null,
-        status: errorWithResponse.response?.status || null,
-        response: errorWithResponse.response,
-      };
-
-      throw enhancedError;
-    }
-
     throw error;
   }
 };
 
 export const exportUsers = async () => {
   try {
-    const response = await fetch(`${API_URL}/users/export-fast`);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    const resp = await apiFetch(`${API_URL}/users/export`);
+    if (resp instanceof Response) {
+      const blob = await resp.blob();
+      downloadBlob(blob, `users_${new Date().toISOString()}.csv`);
+      return true;
     }
-
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `users_${new Date().toISOString()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    return true;
+    throw new Error('Unexpected response type for export');
   } catch (error) {
     console.error("Error exporting users:", error);
     throw error;
@@ -227,44 +199,25 @@ export const bulkDeleteUsers = async (params: BulkOperationParams) => {
 
 export const bulkExportUsers = async (params: BulkOperationParams) => {
   try {
-    // 認証ヘッダーを含むfetchを直接使用（blobレスポンスのため）
-    const authHeaders = getAuthHeaders();
-    const response = await fetch(`${API_URL}/users/bulk-export-fast`, {
+    const resp = await apiFetch(`${API_URL}/users/bulk-export`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
       body: JSON.stringify(params),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-
-    // ファイル名をContent-Dispositionヘッダーから取得（可能な場合）
-    const contentDisposition = response.headers.get("content-disposition");
-    let filename = "bulk_export.csv";
-    if (contentDisposition) {
-      const matches = contentDisposition.match(/filename="([^"]+)"/);
-      if (matches) {
-        filename = matches[1];
+    if (resp instanceof Response) {
+      const blob = await resp.blob();
+      const contentDisposition = resp.headers.get("content-disposition");
+      let filename = "bulk_export.csv";
+      if (contentDisposition) {
+        const matches = contentDisposition.match(/filename=\"([^\"]+)\"/);
+        if (matches) {
+          filename = matches[1];
+        }
       }
+      downloadBlob(blob, filename);
+      return true;
     }
-
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
-
-    return true;
+    throw new Error('Unexpected response type for bulk export');
   } catch (error: unknown) {
     console.error("Error bulk exporting users:", error);
     throw error;
@@ -294,65 +247,25 @@ export const checkDuplicates = async (file: File) => {
     const formData = new FormData();
     formData.append("csv_file", file);
 
-    // 認証ヘッダーを追加（ファイルアップロードのためContent-Typeは設定しない）
-    const authHeaders = getAuthHeaders();
-    const response = await fetch(`${API_URL}/users/check-duplicates`, {
+    return await apiFetch(`${API_URL}/users/check-duplicates`, {
       method: "POST",
-      headers: authHeaders,
       body: formData,
     });
-
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => null);
-      const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
-      (error as Error & { response?: { status: number; data: string | null } }).response = {
-        status: response.status,
-        data: errorText,
-      };
-      throw error;
-    }
-
-    return response.json();
   } catch (error) {
     console.error("Error checking duplicates:", error);
-
-    if (error && typeof error === "object" && "response" in error) {
-      const errorWithResponse = error as { response?: { status?: number; data?: unknown } };
-      console.error("Response status:", errorWithResponse.response?.status);
-      console.error("Response data:", errorWithResponse.response?.data);
-
-      const enhancedError = {
-        message: error instanceof Error ? error.message : "Unknown error",
-        details: errorWithResponse.response?.data || null,
-        status: errorWithResponse.response?.status || null,
-        response: errorWithResponse.response,
-      };
-
-      throw enhancedError;
-    }
-
     throw error;
   }
 };
 
 export const downloadSampleCSV = async () => {
   try {
-    const response = await fetch(`${API_URL}/users/sample-csv`);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    const resp = await apiFetch(`${API_URL}/users/sample-csv`);
+    if (resp instanceof Response) {
+      const blob = await resp.blob();
+      downloadBlob(blob, 'sample_users.csv');
+      return true;
     }
-
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `sample_users.csv`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    return true;
+    throw new Error('Unexpected response type for sample CSV');
   } catch (error) {
     console.error("Error downloading sample CSV:", error);
     throw error;

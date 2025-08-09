@@ -356,13 +356,13 @@ class CsvController extends Controller
 
     /**
      * ユーザーデータをCSVファイルにエクスポートする（高速・低メモリ版）
-     * 
+     *
      * 最適化戦略：
      * - Raw SQL + PDO直接使用（Eloquentオーバーヘッド回避）
      * - アンバッファードクエリ（メモリ効率最大化）
      * - 大きなバッファサイズ（64KB）
      * - バッチ書き込み（1000行ごと）
-     * 
+     *
      * パフォーマンス実績：
      * - 100万件を約1.8秒で処理
      * - メモリ使用量: 約80MB（従来比68%削減）
@@ -373,10 +373,10 @@ class CsvController extends Controller
         $validated = $request->validate([
             'status' => ['nullable', 'string', Rule::in(['active', 'pending', 'inactive', 'expired'])],
         ]);
-        
+
         // 実行時間を無制限に設定
         set_time_limit(0);
-        
+
         // 出力バッファリングを無効化
         if (ob_get_level()) {
             ob_end_clean();
@@ -384,7 +384,7 @@ class CsvController extends Controller
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="users_' . date('YmdHis') . '.csv"',
+            'Content-Disposition' => 'attachment; filename="users_'.date('YmdHis').'.csv"',
             'Cache-Control' => 'no-cache, no-store, must-revalidate',
             'Pragma' => 'no-cache',
             'Expires' => '0',
@@ -395,17 +395,17 @@ class CsvController extends Controller
             $bufferSize = 65536;
             $handle = fopen('php://output', 'w');
             stream_set_write_buffer($handle, $bufferSize);
-            
+
             // BOM付きUTF-8でExcel対応
             fwrite($handle, chr(0xEF).chr(0xBB).chr(0xBF));
-            
+
             // ヘッダー行を書き込む（getCsvHeaders()メソッドを活用）
             $csvHeaders = $this->getCsvHeaders();
             fputcsv($handle, $csvHeaders);
 
             // 生SQLで直接PDOカーソルを使用（高速化）
             $pdo = DB::getPdo();
-            
+
             // MySQL特有の属性を安全に設定（アンバッファードクエリ）
             if (config('database.default') === 'mysql' && defined('PDO::MYSQL_ATTR_USE_BUFFERED_QUERY')) {
                 try {
@@ -414,41 +414,41 @@ class CsvController extends Controller
                     Log::warning('Failed to set MySQL unbuffered query attribute', ['error' => $e->getMessage()]);
                 }
             }
-            
+
             // SQLクエリ構築（フィルタリング対応）
             $sql = 'SELECT 
                 id, name, email, phone_number, address, birth_date,
                 gender, membership_status, notes, profile_image, points,
                 last_login_at, created_at, updated_at
                 FROM users';
-            
+
             $params = [];
-            if (!empty($validated['status'])) {
+            if (! empty($validated['status'])) {
                 $sql .= ' WHERE membership_status = ?';
                 $params[] = $validated['status'];
             }
-            
+
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
-            
+
             $exportedCount = 0;
             $buffer = '';
             $bufferRows = 0;
             $maxBufferRows = 1000; // 1000行ごとにフラッシュ
-            
+
             while ($row = $stmt->fetch(\PDO::FETCH_NUM)) {
                 // CSVエスケープ処理を適用してCSV行を構築
                 $csvLine = $this->buildOptimizedCsvLine($row);
                 $buffer .= $csvLine;
                 $bufferRows++;
                 $exportedCount++;
-                
+
                 // バッファが一定サイズに達したらフラッシュ
                 if ($bufferRows >= $maxBufferRows) {
                     fwrite($handle, $buffer);
                     $buffer = '';
                     $bufferRows = 0;
-                    
+
                     // 100,000行ごとにログ（頻度を下げる）
                     if ($exportedCount % 100000 === 0) {
                         Log::info('CSV export progress', [
@@ -458,22 +458,22 @@ class CsvController extends Controller
                     }
                 }
             }
-            
+
             // 残りのバッファをフラッシュ
             if ($buffer !== '') {
                 fwrite($handle, $buffer);
             }
-            
+
             fclose($handle);
-            
+
             Log::info('CSV export completed', [
                 'total_exported' => $exportedCount,
                 'peak_memory_mb' => round(memory_get_peak_usage(true) / 1024 / 1024, 2),
             ]);
-            
+
         }, 200, $headers);
     }
-    
+
     /**
      * 高速CSV行構築ヘルパー
      */
@@ -484,14 +484,15 @@ class CsvController extends Controller
             if ($field === null) {
                 $escaped[] = '';
             } elseif (strpos($field, ',') !== false || strpos($field, '"') !== false || strpos($field, "\n") !== false) {
-                $escaped[] = '"' . str_replace('"', '""', $field) . '"';
+                $escaped[] = '"'.str_replace('"', '""', $field).'"';
             } else {
                 $escaped[] = $field;
             }
         }
-        return implode(',', $escaped) . "\n";
+
+        return implode(',', $escaped)."\n";
     }
-    
+
     /**
      * CSVヘッダーを取得
      */

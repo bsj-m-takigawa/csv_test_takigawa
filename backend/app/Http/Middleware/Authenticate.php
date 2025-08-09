@@ -12,6 +12,12 @@ class Authenticate extends Middleware
      */
     protected function redirectTo(Request $request): ?string
     {
-        return $request->expectsJson() ? null : route('login');
+        // APIリクエストの場合はnullを返す（JSONレスポンスを生成）
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return null;
+        }
+
+        // Webリクエストの場合のみリダイレクト（ただしloginルートは定義されていない）
+        return null;
     }
 }

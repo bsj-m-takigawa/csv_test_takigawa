@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { fetchUser, updateUser, User } from "../../../../lib/api/users";
+import { fetchUser, updateUser, User } from "@/lib/api/users";
 import {
   Button,
   Input,
