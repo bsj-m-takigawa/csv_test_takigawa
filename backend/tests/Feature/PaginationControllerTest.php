@@ -115,6 +115,22 @@ class PaginationControllerTest extends TestCase
     }
 
     /**
+     * LIKE検索でワイルドカード文字がエスケープされることをテスト
+     */
+    public function test_pagination_controller_escapes_like_wildcards()
+    {
+        User::factory(3)->create();
+
+        $response = $this->getJson('/api/users?q=%');
+        $response->assertStatus(200)
+            ->assertJsonCount(0, 'data');
+
+        $response = $this->getJson('/api/users?q=_');
+        $response->assertStatus(200)
+            ->assertJsonCount(0, 'data');
+    }
+
+    /**
      * ステータスフィルタのテスト
      */
     public function test_pagination_controller_status_filter()
