@@ -165,16 +165,7 @@ class AuthenticationTest extends TestCase
         $response->assertUnauthorized();
     }
 
-    /**
-     * 高速バルクエクスポートに認証が必要なことをテスト
-     */
-    public function test_bulk_export_fast_requires_authentication()
-    {
-        $response = $this->postJson('/api/users/bulk-export-fast', [
-            'user_ids' => [1, 2, 3],
-        ]);
-        $response->assertUnauthorized();
-    }
+    // 重複テスト削除: 実エンドポイントは /api/users/bulk-export のみ
 
     /**
      * 認証済みユーザーがCSV重複チェックを実行できることをテスト

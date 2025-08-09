@@ -37,8 +37,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
   
-  // トークンの基本的な検証（長さチェック）
-  if (token.length < 40) {
+  // トークンの厳密な検証（英数40文字以上）
+  const tokenPattern = /^[A-Za-z0-9]{40,}$/;
+  if (!tokenPattern.test(token)) {
     // 不正なトークンの場合もログインページへ
     const url = request.nextUrl.clone();
     url.pathname = '/login';
