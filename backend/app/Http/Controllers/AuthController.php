@@ -25,7 +25,15 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+        // タイミング攻撃対策：ユーザーが存在しない場合でもハッシュ検証を実行
+        $isValidPassword = $user ? Hash::check($request->password, $user->password) : false;
+        
+        // ダミーのハッシュ検証でタイミングを均一化
+        if (!$user) {
+            Hash::check('dummy_password', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi');
+        }
+
+        if (! $user || ! $isValidPassword) {
             throw ValidationException::withMessages([
                 'email' => ['認証情報が正しくありません。'],
             ]);
