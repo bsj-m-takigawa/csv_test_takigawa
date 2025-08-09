@@ -24,7 +24,11 @@ function LoginForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ 
+          email, 
+          password,
+          device_name: 'web-browser' // Sanctumで必要なデバイス名
+        }),
       });
 
       if (!response.ok) {
