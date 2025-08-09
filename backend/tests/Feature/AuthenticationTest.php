@@ -169,17 +169,6 @@ class AuthenticationTest extends TestCase
     }
 
     /**
-     * 高速バルクエクスポートに認証が必要なことをテスト
-     */
-    public function test_bulk_export_fast_requires_authentication()
-    {
-        $response = $this->postJson('/api/users/bulk-export-fast', [
-            'user_ids' => [1, 2, 3],
-        ]);
-        $response->assertUnauthorized();
-    }
-
-    /**
      * 認証済みユーザーがCSV重複チェックを実行できることをテスト
      */
     public function test_authenticated_user_can_check_duplicates()

@@ -77,7 +77,7 @@
 - CORS 設定
   - `supports_credentials: true`。本番で `FRONTEND_URL` を厳密に。
 - 機能差分（セキュリティ影響は小）
-  - フロントが `POST /users/bulk-export-fast` を呼ぶが、バックエンドは `POST /users/bulk-export` のみ。
+  - フロントとバックエンドのエンドポイントは `/users/bulk-export` に統一された。
 
 ---
 

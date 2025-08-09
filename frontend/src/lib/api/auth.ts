@@ -3,21 +3,21 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 // 認証トークンの管理
 export const AuthToken = {
   get: () => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('auth_token');
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("auth_token");
     }
     return null;
   },
   set: (token: string) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('auth_token', token);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("auth_token", token);
     }
   },
   remove: () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token');
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("auth_token");
     }
-  }
+  },
 };
 
 // 認証ヘッダーを取得
@@ -25,7 +25,7 @@ export const getAuthHeaders = (): Record<string, string> => {
   const token = AuthToken.get();
   if (token) {
     return {
-      'Authorization': `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     };
   }
   return {};
@@ -34,20 +34,20 @@ export const getAuthHeaders = (): Record<string, string> => {
 // ログイン
 export const login = async (email: string, password: string) => {
   const response = await fetch(`${API_URL}/login`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       email,
       password,
-      device_name: 'web'
+      device_name: "web",
     }),
   });
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.message || 'ログインに失敗しました');
+    throw new Error(error.message || "ログインに失敗しました");
   }
 
   const data = await response.json();
@@ -62,10 +62,10 @@ export const logout = async () => {
 
   try {
     await fetch(`${API_URL}/logout`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
     });
   } finally {
@@ -81,7 +81,7 @@ export const getCurrentUser = async () => {
   try {
     const response = await fetch(`${API_URL}/user`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
     });
 

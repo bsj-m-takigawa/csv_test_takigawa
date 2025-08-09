@@ -82,7 +82,6 @@ curl -X POST http://localhost:8000/api/logout \
 - `POST /api/users/check-duplicates` - CSV重複チェック
 - `POST /api/users/bulk-delete` - 一括削除
 - `POST /api/users/bulk-export` - 一括エクスポート
-- `POST /api/users/bulk-export-fast` - 高速一括エクスポート
 
 ### 認証不要のエンドポイント（読み取り専用）
 
@@ -91,7 +90,6 @@ curl -X POST http://localhost:8000/api/logout \
 - `GET /api/users` - ユーザー一覧取得
 - `GET /api/users/{id}` - ユーザー詳細取得
 - `GET /api/users/export` - CSVエクスポート
-- `GET /api/users/export-fast` - 高速CSVエクスポート
 - `GET /api/users/sample-csv` - サンプルCSVダウンロード
 - `GET /api/users/status-counts` - ステータス別カウント取得
 - `GET /api/pagination` - ページネーション付きユーザー一覧
