@@ -1,28 +1,50 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { login } from '@/lib/api/auth';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function LoginPage() {
+function LoginForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const returnUrl = searchParams.get('returnUrl') || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
+    setIsLoading(true);
 
     try {
-      await login(email, password);
-      router.push('/users/list');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'ログインに失敗しました');
+      }
+
+      const data = await response.json();
+      
+      // トークンをローカルストレージに保存
+      if (data.access_token) {
+        localStorage.setItem('auth_token', data.access_token);
+      }
+
+      // 元のページまたはホームページへリダイレクト
+      router.push(decodeURIComponent(returnUrl));
     } catch (err) {
-      setError((err as Error).message || 'ログインに失敗しました');
+      setError(err instanceof Error ? err.message : 'ログインに失敗しました');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -35,11 +57,6 @@ export default function LoginPage() {
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-800">{error}</div>
-            </div>
-          )}
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <label htmlFor="email" className="sr-only">
@@ -75,17 +92,43 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {error && (
+            <div className="rounded-md bg-red-50 p-4">
+              <div className="flex">
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">
+                    {error}
+                  </h3>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div>
             <button
               type="submit"
-              disabled={loading}
+              disabled={isLoading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'ログイン中...' : 'ログイン'}
+              {isLoading ? 'ログイン中...' : 'ログイン'}
             </button>
+          </div>
+
+          <div className="text-sm text-center">
+            <p className="text-gray-600">
+              テスト用アカウント: test@example.com / password
+            </p>
           </div>
         </form>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50">ログインページを読み込み中...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
