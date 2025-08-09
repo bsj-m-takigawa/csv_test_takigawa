@@ -70,7 +70,12 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        $user = User::findOrFail($id);
+        $user = User::select(['id', 'name', 'email', 'membership_status', 'created_at', 'updated_at'])
+            ->find($id);
+
+        if (! $user) {
+            abort(404);
+        }
 
         return response()->json($user);
     }

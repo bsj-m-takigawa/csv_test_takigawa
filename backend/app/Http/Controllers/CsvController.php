@@ -416,10 +416,8 @@ class CsvController extends Controller
             }
             
             // SQLクエリ構築（フィルタリング対応）
-            $sql = 'SELECT 
-                id, name, email, phone_number, address, birth_date,
-                gender, membership_status, notes, profile_image, points,
-                last_login_at, created_at, updated_at
+            $sql = 'SELECT
+                id, name, email, membership_status, created_at, updated_at
                 FROM users';
             
             $params = [];
@@ -501,15 +499,7 @@ class CsvController extends Controller
             'ID',
             '名前',
             'メールアドレス',
-            '電話番号',
-            '住所',
-            '生年月日',
-            '性別',
             '会員状態',
-            'メモ',
-            'プロフィール画像',
-            'ポイント',
-            '最終ログイン',
             '作成日',
             '更新日',
         ];
@@ -723,49 +713,17 @@ class CsvController extends Controller
                     '', // ID（空白 - 新規作成時は不要）
                     '山田 太郎',
                     'taro@example.com',
-                    '090-1234-5678',
-                    '東京都渋谷区神宮前1-2-3',
-                    '1990-01-15',
-                    'male',
                     'active',
-                    'サンプルユーザーです',
-                    '',
-                    '100',
-                    '',
-                    '',
-                    '',
+                    '2025-01-01 00:00:00',
+                    '2025-01-01 00:00:00',
                 ],
                 [
                     '', // ID（空白）
                     '佐藤 花子',
                     'hanako@example.com',
-                    '080-9876-5432',
-                    '大阪府大阪市中央区1-1-1',
-                    '1985-05-20',
-                    'female',
-                    'pending',
-                    'テストユーザー',
-                    '',
-                    '50',
-                    '',
-                    '',
-                    '',
-                ],
-                [
-                    '', // ID（空白）
-                    '田中 次郎',
-                    'jiro@example.com',
-                    '',
-                    '',
-                    '',
-                    '',
                     'inactive',
-                    '',
-                    '',
-                    '0',
-                    '',
-                    '',
-                    '',
+                    '2025-01-01 00:00:00',
+                    '2025-01-01 00:00:00',
                 ],
             ];
 

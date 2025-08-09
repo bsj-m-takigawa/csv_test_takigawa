@@ -4,11 +4,18 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class CsvExportValidationTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Sanctum::actingAs(User::factory()->create());
+    }
 
     /**
      * 不正なstatusパラメータが拒否されることをテスト
@@ -37,7 +44,7 @@ class CsvExportValidationTest extends TestCase
 
         foreach ($validStatuses as $status) {
             $response = $this->get("/api/users/export?status={$status}");
-            
+
             $response->assertStatus(200);
             $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
         }
@@ -76,9 +83,7 @@ class CsvExportValidationTest extends TestCase
         $firstLine = ltrim($lines[0], "\xEF\xBB\xBF");
         
         $expectedHeaders = [
-            'ID', '名前', 'メールアドレス', '電話番号', '住所',
-            '生年月日', '性別', '会員状態', 'メモ', 'プロフィール画像',
-            'ポイント', '最終ログイン', '作成日', '更新日'
+            'ID', '名前', 'メールアドレス', '会員状態', '作成日', '更新日'
         ];
         
         $actualHeaders = str_getcsv($firstLine);

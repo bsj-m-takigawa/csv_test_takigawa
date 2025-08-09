@@ -4,18 +4,31 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class PaginationControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function authenticate(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+    }
+
     /**
      * PaginationControllerのデフォルトページネーションテスト
      * GET /api/usersエンドポイントの実際の動作を確認
      */
+    public function test_users_endpoint_requires_authentication(): void
+    {
+        $response = $this->getJson('/api/users');
+        $response->assertUnauthorized();
+    }
+
     public function test_pagination_controller_returns_paginated_users_with_default_per_page()
     {
+        $this->authenticate();
         // 25件のユーザーを作成
         User::factory(25)->create();
 
@@ -42,6 +55,7 @@ class PaginationControllerTest extends TestCase
      */
     public function test_pagination_controller_respects_custom_per_page_parameter()
     {
+        $this->authenticate();
         User::factory(30)->create();
 
         $response = $this->getJson('/api/users?per_page=10');
@@ -56,6 +70,7 @@ class PaginationControllerTest extends TestCase
      */
     public function test_pagination_controller_limits_per_page_to_maximum_100()
     {
+        $this->authenticate();
         // バリデーションエラーが発生することを確認
         $response = $this->getJson('/api/users?per_page=200');
 
@@ -68,6 +83,7 @@ class PaginationControllerTest extends TestCase
      */
     public function test_pagination_controller_limits_per_page_to_minimum_1()
     {
+        $this->authenticate();
         // バリデーションエラーが発生することを確認
         $response = $this->getJson('/api/users?per_page=0');
 
@@ -80,6 +96,7 @@ class PaginationControllerTest extends TestCase
      */
     public function test_pagination_controller_supports_page_navigation()
     {
+        $this->authenticate();
         User::factory(25)->create();
 
         // 2ページ目を取得（per_page=10）
@@ -103,6 +120,7 @@ class PaginationControllerTest extends TestCase
      */
     public function test_pagination_controller_search_functionality()
     {
+        $this->authenticate();
         User::factory()->create(['name' => 'John Doe']);
         User::factory()->create(['name' => 'Jane Smith']);
         User::factory(5)->create();
@@ -119,6 +137,7 @@ class PaginationControllerTest extends TestCase
      */
     public function test_pagination_controller_status_filter()
     {
+        $this->authenticate();
         User::factory(3)->create(['membership_status' => 'active']);
         User::factory(2)->create(['membership_status' => 'inactive']);
         User::factory(1)->create(['membership_status' => 'pending']);
@@ -134,6 +153,7 @@ class PaginationControllerTest extends TestCase
      */
     public function test_pagination_controller_sorting()
     {
+        $this->authenticate();
         $user1 = User::factory()->create(['name' => 'Alice']);
         $user2 = User::factory()->create(['name' => 'Bob']);
         $user3 = User::factory()->create(['name' => 'Charlie']);
@@ -151,6 +171,7 @@ class PaginationControllerTest extends TestCase
      */
     public function test_pagination_controller_caching()
     {
+        $this->authenticate();
         User::factory(5)->create();
 
         // 最初のリクエスト

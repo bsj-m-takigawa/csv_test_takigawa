@@ -31,11 +31,11 @@ Route::middleware(['auth:sanctum', 'throttle:10,1'])->group(function () {
     Route::post('users/check-duplicates', [CsvController::class, 'checkDuplicates']);
 });
 
-// CSV操作（読み取り専用、認証不要）
-Route::middleware(['throttle:10,1'])->group(function () {
+// CSV操作（読み取り専用）
+Route::middleware(['auth:sanctum', 'throttle:10,1'])->group(function () {
     Route::get('users/export', [CsvController::class, 'export']); // 統合された高速エクスポート（1.8秒/100万件）
-    Route::get('users/sample-csv', [CsvController::class, 'sampleCsv']);
 });
+Route::middleware(['throttle:10,1'])->get('users/sample-csv', [CsvController::class, 'sampleCsv']);
 
 // Paginationエンドポイント（APIドキュメントに合わせて）
 Route::get('pagination', [PaginationController::class, 'index']);
@@ -44,9 +44,11 @@ Route::get('pagination/status-counts', [PaginationController::class, 'statusCoun
 // ステータスカウントAPI（下位互換性のため）
 Route::get('users/status-counts', [PaginationController::class, 'statusCounts']);
 
-// 公開API（読み取り専用）
-Route::get('users', [PaginationController::class, 'index']);
-Route::get('users/{user}', [UserController::class, 'show']);
+// 認証必須API（読み取り専用）
+Route::middleware(['auth:sanctum', 'throttle:10,1'])->group(function () {
+    Route::get('users', [PaginationController::class, 'index']);
+    Route::get('users/{user}', [UserController::class, 'show']);
+});
 
 // 認証必須API（書き込み操作）
 Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {

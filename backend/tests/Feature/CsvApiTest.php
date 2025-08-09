@@ -6,11 +6,18 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class CsvApiTest extends TestCase
 {
     use DatabaseTransactions;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Sanctum::actingAs(User::factory()->create());
+    }
 
     public function test_can_import_csv(): void
     {
@@ -42,7 +49,7 @@ class CsvApiTest extends TestCase
         $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
 
         $content = $response->streamedContent();
-        $this->assertStringContainsString('ID,名前,メールアドレス', $content);
+        $this->assertStringContainsString('ID,名前,メールアドレス,会員状態,作成日,更新日', $content);
         $this->assertStringContainsString($users->first()->email, $content);
     }
 }

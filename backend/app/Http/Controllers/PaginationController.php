@@ -42,7 +42,7 @@ class PaginationController extends Controller
         $statusFilter = $validated['status'] ?? null;
         $createdFilter = $validated['created'] ?? null;
 
-        $query = User::query();
+        $query = User::select(['id', 'name', 'email', 'membership_status', 'created_at', 'updated_at']);
 
         // 検索条件（フルテキスト検索を優先）
         if ($q !== null && $q !== '') {
