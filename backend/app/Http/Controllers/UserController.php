@@ -44,8 +44,8 @@ class UserController extends Controller
             $user = User::create($data);
             Log::info('User created', ['id' => $user->id, 'name' => $user->name]);
 
-            // ページネーションキャッシュをクリア
-            $this->clearPaginationCache();
+            // ユーザー関連のキャッシュをクリア
+            $this->clearUserRelatedCache();
 
             return response()->json($user, 201);
         } catch (\Exception $e) {
@@ -89,7 +89,7 @@ class UserController extends Controller
         Log::info('User updated', ['id' => $user->id]);
 
         // ページネーションキャッシュをクリア
-        $this->clearPaginationCache();
+        $this->clearUserRelatedCache();
 
         return response()->json($user);
     }
@@ -106,7 +106,7 @@ class UserController extends Controller
         Log::info('User deleted', ['id' => $id]);
 
         // ページネーションキャッシュをクリア
-        $this->clearPaginationCache();
+        $this->clearUserRelatedCache();
 
         return response()->json(['message' => 'User deleted successfully'], 200);
     }
@@ -236,8 +236,8 @@ class UserController extends Controller
 
             DB::commit();
 
-            // ページネーションキャッシュをクリア
-            $this->clearPaginationCache();
+            // ユーザー関連のキャッシュをクリア
+            $this->clearUserRelatedCache();
 
             Log::info('Bulk delete completed', [
                 'deleted_count' => $deletedCount,
@@ -272,14 +272,18 @@ class UserController extends Controller
      * ユーザー関連のキャッシュをクリアする
      * タグベースキャッシュを使用して、ユーザー関連のキャッシュのみを削除
      */
-    private function clearPaginationCache()
+    private function clearUserRelatedCache()
     {
         try {
             // ユーザー関連のキャッシュのみをクリア
             Cache::tags(['users'])->flush();
             Log::info('User-related cache cleared after user operation');
         } catch (\Exception $e) {
-            Log::warning('Failed to clear user cache', ['error' => $e->getMessage()]);
+            // より具体的なエラーハンドリング
+            Log::warning('Failed to clear user-related cache', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 }
