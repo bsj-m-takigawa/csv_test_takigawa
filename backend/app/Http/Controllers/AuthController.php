@@ -25,13 +25,13 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        // タイミング攻撃対策：ユーザーが存在しない場合でもハッシュ検証を実行
-        $isValidPassword = $user ? Hash::check($request->password, $user->password) : false;
+        // タイミング攻撃対策：ユーザーが存在しない場合でも同等の計算時間を確保
+        // bcryptのデフォルトハッシュを使用（Laravelのデフォルトパスワード）
+        $dummyHash = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi';
         
-        // ダミーのハッシュ検証でタイミングを均一化
-        if (!$user) {
-            Hash::check('dummy_password', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi');
-        }
+        // ユーザーが存在する場合は実際のハッシュ、存在しない場合はダミーハッシュで検証
+        $hashToCheck = $user ? $user->password : $dummyHash;
+        $isValidPassword = Hash::check($request->password, $hashToCheck);
 
         if (! $user || ! $isValidPassword) {
             throw ValidationException::withMessages([
