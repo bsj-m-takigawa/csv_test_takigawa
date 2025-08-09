@@ -1,33 +1,67 @@
 #!/bin/bash
 
-# .envファイルをGit履歴から削除するスクリプト
+# .envファイルの安全性チェックスクリプト
+# 注意: このスクリプトはGit履歴の書き換えは行いません
 
-echo "警告: このスクリプトはGit履歴を書き換えます。"
-echo "実行前に必ずバックアップを取ってください。"
-echo ""
-read -p "続行しますか？ (y/N): " -n 1 -r
+echo "========================================"
+echo " .envファイル セキュリティチェック"
+echo "========================================"
 echo ""
 
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "中止しました。"
-    exit 1
+# 現在の.envファイルの状態をチェック
+echo "1. 現在の.envファイルの状態:"
+echo "----------------------------------------"
+if [ -f ".env" ]; then
+    echo "⚠️  ルートディレクトリに.envファイルが存在します"
+else
+    echo "✅ ルートディレクトリに.envファイルはありません"
 fi
 
-echo "Git履歴から.envファイルを削除しています..."
+if [ -f "backend/.env" ]; then
+    echo "⚠️  backend/.envファイルが存在します"
+else
+    echo "✅ backend/.envファイルはありません"
+fi
 
-# filter-branchを使用して履歴から.envファイルを削除
-git filter-branch --force --index-filter \
-  'git rm --cached --ignore-unmatch backend/.env frontend/.env' \
-  --prune-empty --tag-name-filter cat -- --all
+if [ -f "frontend/.env" ]; then
+    echo "⚠️  frontend/.envファイルが存在します"
+else
+    echo "✅ frontend/.envファイルはありません"
+fi
 
 echo ""
-echo "完了しました。"
+echo "2. .gitignoreの設定確認:"
+echo "----------------------------------------"
+if grep -q "^\.env" .gitignore; then
+    echo "✅ .envは.gitignoreに含まれています"
+else
+    echo "⚠️  .envが.gitignoreに含まれていません"
+fi
+
 echo ""
-echo "次のステップ:"
-echo "1. 新しい認証情報を生成して.envファイルを更新"
-echo "2. force pushでリモートリポジトリを更新:"
-echo "   git push --force --all"
-echo "   git push --force --tags"
+echo "3. Git履歴の確認:"
+echo "----------------------------------------"
+echo "過去のコミットで.envファイルが含まれているか確認中..."
+ENV_COMMITS=$(git log --all --full-history --oneline -- "**/.env" "*.env" 2>/dev/null | wc -l)
+
+if [ "$ENV_COMMITS" -gt 0 ]; then
+    echo "⚠️  警告: Git履歴に.envファイルが含まれています ($ENV_COMMITS コミット)"
+    echo ""
+    echo "影響のあるコミット:"
+    git log --all --full-history --oneline -- "**/.env" "*.env" | head -5
+    echo ""
+    echo "推奨される対応:"
+    echo "1. 影響を受ける可能性のある認証情報をすべて変更"
+    echo "2. 新しいAPIキー、パスワードを生成"
+    echo "3. チームメンバーに通知"
+    echo ""
+    echo "注意: Git履歴の書き換えは影響が大きいため、"
+    echo "      新しい認証情報への変更を優先してください。"
+else
+    echo "✅ Git履歴に.envファイルは含まれていません"
+fi
+
 echo ""
-echo "警告: force pushは他の開発者の作業に影響を与える可能性があります。"
-echo "チームメンバーに通知してください。"
+echo "========================================"
+echo " チェック完了"
+echo "========================================"

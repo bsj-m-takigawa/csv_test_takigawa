@@ -76,16 +76,18 @@ NEXT_PUBLIC_API_URL=http://localhost:8000/api
 1. **即座に対応**
    - 該当するパスワード/キーを無効化
    - 新しい認証情報を生成
+   - チームメンバーに通知
 
-2. **Git履歴から削除**
+2. **セキュリティ状態の確認**
    ```bash
-   # scripts/remove-env-from-history.shを使用
-   ./scripts/remove-env-from-history.sh
+   # scripts/check-env-security.shを使用
+   ./scripts/check-env-security.sh
    ```
 
-3. **チームへの通知**
+3. **必要に応じた対応**
    - 影響範囲を特定
-   - 全員にリポジトリの再クローンを依頼
+   - パスワード・キーの変更を優先
+   - Git履歴の書き換えは最終手段として検討
 
 ## 連絡先
 
