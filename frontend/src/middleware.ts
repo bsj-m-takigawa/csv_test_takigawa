@@ -12,12 +12,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // ホームページのみ認証不要（ランディングページとして）
-  if (pathname === "/") {
-    return NextResponse.next();
-  }
-
-  // それ以外の全てのページ（ユーザー一覧、詳細、編集など）は認証必須
+  // 全てのページ（ホームページを含む）で認証必須
   // PII保護のため、ユーザー情報の閲覧も認証が必要
   const token = request.cookies.get("auth_token")?.value;
 
