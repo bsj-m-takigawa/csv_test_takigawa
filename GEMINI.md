@@ -7,7 +7,7 @@
 **技術スタック:**
 
 *   **フロントエンド:** Next.js, TypeScript, Tailwind CSS, shadcn/ui
-*   **バックエンド:** Laravel 11, PHP 8.1, MySQL 8.0
+*   **バックエンド:** Laravel 10, PHP 8.1, MySQL 8.0
 *   **インフラ:** Docker, Docker Compose
 
 ## ビルドと実行

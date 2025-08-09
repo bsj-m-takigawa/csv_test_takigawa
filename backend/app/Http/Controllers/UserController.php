@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
-use App\Support\QueryHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -183,18 +182,7 @@ class UserController extends Controller
 
                     // 検索条件を適用
                     if (! empty($filters['q'])) {
-                        $q = $filters['q'];
-                        if (config('database.default') === 'mysql') {
-                            $query->whereFullText(['name', 'email', 'phone_number'], $q);
-                        } else {
-                            $escaped = QueryHelper::escapeLike($q);
-                            $like = "%{$escaped}%";
-                            $query->where(function ($sub) use ($like) {
-                                $sub->whereRaw("name LIKE ? ESCAPE '\\'", [$like])
-                                    ->orWhereRaw("email LIKE ? ESCAPE '\\'", [$like])
-                                    ->orWhereRaw("phone_number LIKE ? ESCAPE '\\'", [$like]);
-                            });
-                        }
+                        $query->search($filters['q']);
                     }
 
                     // ステータスフィルタ

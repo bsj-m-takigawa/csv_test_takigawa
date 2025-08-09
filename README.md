@@ -5,7 +5,7 @@
 ## 技術スタック
 
 - **フロントエンド**: Next.js 15, TypeScript, Tailwind CSS 4, react-window
-- **バックエンド**: Laravel 11, PHP 8.1, MySQL 8.0
+- **バックエンド**: Laravel 10, PHP 8.1, MySQL 8.0
 - **インフラ**: Docker, Docker Compose
 
 ## パフォーマンス最適化済み
