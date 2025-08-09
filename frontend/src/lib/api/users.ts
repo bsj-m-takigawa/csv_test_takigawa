@@ -1,3 +1,5 @@
+import { getAuthHeaders } from './auth';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 export interface User {
@@ -19,12 +21,14 @@ export interface User {
 
 // Fetch API helper function
 async function apiFetch(url: string, options: RequestInit = {}) {
+  const authHeaders = getAuthHeaders();
   const response = await fetch(url, {
+    ...options,
     headers: {
       "Content-Type": "application/json",
-      ...options.headers,
+      ...authHeaders,
+      ...(options.headers || {}),
     },
-    ...options,
   });
 
   if (!response.ok) {

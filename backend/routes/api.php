@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CsvController;
 use App\Http\Controllers\FastCsvController;
 use App\Http\Controllers\PaginationController;
@@ -18,14 +19,21 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+// 認証エンドポイント
+Route::post('/login', [AuthController::class, 'login']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/user', [AuthController::class, 'me']);
 });
 
-// CSV操作とステータスカウント（特定のパスを先に定義）
-Route::middleware(['throttle:10,1'])->group(function () {
+// CSV操作（認証必須の書き込み系）
+Route::middleware(['auth:sanctum', 'throttle:10,1'])->group(function () {
     Route::post('users/import', [CsvController::class, 'import']);
     Route::post('users/check-duplicates', [CsvController::class, 'checkDuplicates']);
+});
+
+// CSV操作（読み取り専用、認証不要）
+Route::middleware(['throttle:10,1'])->group(function () {
     Route::get('users/export', [CsvController::class, 'export']);
     Route::get('users/export-fast', [FastCsvController::class, 'exportFast']); // 超高速エクスポート
     Route::get('users/sample-csv', [CsvController::class, 'sampleCsv']);
@@ -42,13 +50,13 @@ Route::get('users/status-counts', [PaginationController::class, 'statusCounts'])
 Route::get('users', [PaginationController::class, 'index']);
 Route::get('users/{user}', [UserController::class, 'show']);
 
-// レート制限付きAPI（書き込み操作）
-Route::middleware(['throttle:60,1'])->group(function () {
+// 認証必須API（書き込み操作）
+Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::post('users', [UserController::class, 'store']);
     Route::put('users/{user}', [UserController::class, 'update']);
     Route::delete('users/{user}', [UserController::class, 'destroy']);
 
-    // バルク操作API
+    // バルク操作API（認証必須）
     Route::post('users/bulk-delete', [UserController::class, 'bulkDelete']);
     Route::post('users/bulk-export', [CsvController::class, 'bulkExport']);
     Route::post('users/bulk-export-fast', [FastCsvController::class, 'bulkExportFast']); // 超高速バルクエクスポート
