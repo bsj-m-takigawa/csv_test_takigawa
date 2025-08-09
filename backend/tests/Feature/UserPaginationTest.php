@@ -10,6 +10,12 @@ class UserPaginationTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->authenticate();
+    }
+
     /**
      * デフォルトのページネーションをテスト
      */

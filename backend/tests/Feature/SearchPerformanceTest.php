@@ -11,6 +11,12 @@ class SearchPerformanceTest extends TestCase
 {
     use DatabaseTransactions;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->authenticate();
+    }
+
     /**
      * フルテキスト検索のパフォーマンステスト
      */

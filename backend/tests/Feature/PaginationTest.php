@@ -10,6 +10,12 @@ class PaginationTest extends TestCase
 {
     use DatabaseTransactions;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->authenticate();
+    }
+
     public function test_default_pagination()
     {
         User::factory()->count(30)->create();

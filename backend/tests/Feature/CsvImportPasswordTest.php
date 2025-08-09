@@ -12,6 +12,12 @@ class CsvImportPasswordTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->authenticate();
+    }
+
     /**
      * 新規ユーザー作成時にパスワードが正しく設定されることをテスト
      */

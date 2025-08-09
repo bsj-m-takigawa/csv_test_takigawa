@@ -11,6 +11,12 @@ class CacheManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->authenticate();
+    }
+
     /**
      * タグ付きキャッシュが正しく保存されることをテスト
      */

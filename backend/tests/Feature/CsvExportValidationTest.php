@@ -10,6 +10,12 @@ class CsvExportValidationTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->authenticate();
+    }
+
     /**
      * 不正なstatusパラメータが拒否されることをテスト
      */

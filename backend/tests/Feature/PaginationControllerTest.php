@@ -10,6 +10,12 @@ class PaginationControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->authenticate();
+    }
+
     /**
      * PaginationControllerのデフォルトページネーションテスト
      * GET /api/usersエンドポイントの実際の動作を確認

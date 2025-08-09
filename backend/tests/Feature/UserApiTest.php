@@ -10,6 +10,12 @@ class UserApiTest extends TestCase
 {
     use DatabaseTransactions;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->authenticate();
+    }
+
     public function test_can_create_user(): void
     {
         $userData = [

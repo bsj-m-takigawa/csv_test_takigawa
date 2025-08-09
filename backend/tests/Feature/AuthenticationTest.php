@@ -108,6 +108,10 @@ class AuthenticationTest extends TestCase
 
         $this->getJson('/api/users')->assertUnauthorized();
         $this->getJson('/api/users/export')->assertUnauthorized();
+        $this->getJson('/api/users/sample-csv')->assertUnauthorized();
+        $this->getJson('/api/pagination')->assertUnauthorized();
+        $this->getJson('/api/pagination/status-counts')->assertUnauthorized();
+        $this->getJson('/api/users/status-counts')->assertUnauthorized();
     }
 
     /**

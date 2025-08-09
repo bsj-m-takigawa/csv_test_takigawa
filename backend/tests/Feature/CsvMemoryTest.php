@@ -11,6 +11,12 @@ class CsvMemoryTest extends TestCase
 {
     use DatabaseTransactions;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->authenticate();
+    }
+
     /**
      * CSVエクスポートのメモリ使用量をテスト
      */

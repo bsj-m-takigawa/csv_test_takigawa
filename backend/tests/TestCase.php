@@ -5,6 +5,8 @@ namespace Tests;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use Laravel\Sanctum\Sanctum;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -82,5 +84,15 @@ abstract class TestCase extends BaseTestCase
     {
         $userCount = $this->getTableCount('users');
         echo "\n[DEBUG] {$context}: users table has {$userCount} records\n";
+    }
+
+    /**
+     * 認証済みユーザーとしてテストを実行
+     */
+    protected function authenticate(?User $user = null): User
+    {
+        $user = $user ?? User::factory()->create();
+        Sanctum::actingAs($user);
+        return $user;
     }
 }
