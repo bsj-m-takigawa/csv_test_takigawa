@@ -24,8 +24,8 @@ class PaginationController extends Controller
         // キャッシュキーの生成
         $cacheKey = 'pagination:'.md5(serialize($validated));
 
-        // キャッシュから取得を試みる（5分間）
-        $data = Cache::remember($cacheKey, 300, function () use ($validated) {
+        // タグ付きキャッシュから取得を試みる（5分間）
+        $data = Cache::tags(['users', 'pagination'])->remember($cacheKey, 300, function () use ($validated) {
             return $this->getPaginatedData($validated);
         });
 
@@ -122,8 +122,8 @@ class PaginationController extends Controller
         // キャッシュキーの生成
         $cacheKey = 'status_counts:'.md5(serialize($validated));
 
-        // キャッシュから取得を試みる（5分間）
-        $counts = Cache::remember($cacheKey, 300, function () use ($validated) {
+        // タグ付きキャッシュから取得を試みる（5分間）
+        $counts = Cache::tags(['users', 'status_counts'])->remember($cacheKey, 300, function () use ($validated) {
             return $this->getStatusCounts($validated);
         });
 
