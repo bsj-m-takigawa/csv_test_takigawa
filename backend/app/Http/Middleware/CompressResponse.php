@@ -4,7 +4,9 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CompressResponse
 {
@@ -19,6 +21,11 @@ class CompressResponse
 
         // APIリクエストの場合のみ圧縮対象
         if (! $request->is('api/*')) {
+            return $response;
+        }
+
+        // ストリーミング/ファイルレスポンスは圧縮しない（getContent不可・破損防止）
+        if ($response instanceof StreamedResponse || $response instanceof BinaryFileResponse) {
             return $response;
         }
 

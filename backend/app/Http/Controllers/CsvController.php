@@ -103,6 +103,17 @@ class CsvController extends Controller
                     throw new \Exception("CSVファイルの行数が制限（{$maxLines}行）を超えています");
                 }
 
+                // ヘッダー/列数不一致をスキップ（安全性向上）
+                if (count($header) !== count($data)) {
+                    $errors[] = [
+                        'line' => $lineNumber,
+                        'error' => '列数がヘッダーと一致しません',
+                    ];
+                    $errorCount++;
+
+                    continue;
+                }
+
                 $rawUserData = array_combine($header, $data);
                 $userData = [];
                 foreach ($rawUserData as $key => $value) {
@@ -335,7 +346,7 @@ class CsvController extends Controller
     {
         // 実行時間を無制限に設定（大量データエクスポート用）
         set_time_limit(0);
-        
+
         $startTime = microtime(true);
         $initialMemory = memory_get_usage(true);
 
@@ -350,26 +361,26 @@ class CsvController extends Controller
 
             $exportedCount = 0;
             $peakMemory = $initialMemory;
-            
+
             // カーソルを使用してメモリ効率を最大化
             // cursorを使うことで一度に1レコードずつ処理し、メモリ使用量を最小限に
             $users = User::select(['id', 'name', 'email', 'phone_number', 'address', 'birth_date',
                 'gender', 'membership_status', 'notes', 'profile_image', 'points',
                 'last_login_at', 'created_at', 'updated_at'])
                 ->cursor();
-            
+
             foreach ($users as $user) {
                 fputcsv($handle, $this->formatUserForCsv($user));
                 $exportedCount++;
-                
+
                 // 1000件ごとに出力バッファをフラッシュ（ブラウザのタイムアウト防止）
                 if ($exportedCount % 1000 === 0) {
                     flush();
-                    
+
                     // メモリ使用量を監視
                     $currentMemory = memory_get_usage(true);
                     $peakMemory = max($peakMemory, $currentMemory);
-                    
+
                     // 10000件ごとにログ出力
                     if ($exportedCount % 10000 === 0) {
                         Log::info('CSV export progress', [
@@ -378,7 +389,7 @@ class CsvController extends Controller
                             'execution_time_seconds' => round(microtime(true) - $startTime, 2),
                         ]);
                     }
-                    
+
                     // ガベージコレクションを定期的に実行
                     if ($exportedCount % 5000 === 0 && function_exists('gc_collect_cycles')) {
                         gc_collect_cycles();
@@ -546,6 +557,10 @@ class CsvController extends Controller
         try {
             while (($data = fgetcsv($handle)) !== false) {
                 $lineNumber++;
+                // ヘッダー/列数不一致をスキップ
+                if (count($header) !== count($data)) {
+                    continue;
+                }
 
                 $rawUserData = array_combine($header, $data);
                 $userData = [];
@@ -765,7 +780,7 @@ class CsvController extends Controller
 
         // 実行時間を無制限に設定（大量データエクスポート用）
         set_time_limit(0);
-        
+
         $startTime = microtime(true);
         $initialMemory = memory_get_usage(true);
 
@@ -850,19 +865,19 @@ class CsvController extends Controller
 
             // カーソルを使用してメモリ効率を最大化（100万件対応）
             $users = $query->cursor();
-            
+
             foreach ($users as $user) {
                 fputcsv($handle, $this->formatUserForCsv($user));
                 $exportedCount++;
-                
+
                 // 1000件ごとに出力バッファをフラッシュ（ブラウザのタイムアウト防止）
                 if ($exportedCount % 1000 === 0) {
                     flush();
-                    
+
                     // メモリ使用量を監視
                     $currentMemory = memory_get_usage(true);
                     $peakMemory = max($peakMemory, $currentMemory);
-                    
+
                     // 10000件ごとにログ出力
                     if ($exportedCount % 10000 === 0) {
                         Log::info('Bulk CSV export progress', [
@@ -871,7 +886,7 @@ class CsvController extends Controller
                             'execution_time_seconds' => round(microtime(true) - $startTime, 2),
                         ]);
                     }
-                    
+
                     // ガベージコレクションを定期的に実行
                     if ($exportedCount % 5000 === 0 && function_exists('gc_collect_cycles')) {
                         gc_collect_cycles();
