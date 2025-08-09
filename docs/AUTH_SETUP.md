@@ -69,7 +69,9 @@ curl -X POST http://localhost:8000/api/logout \
 3. トークンは自動的にlocalStorageに保存
 4. 以降のAPIリクエストには自動的に認証ヘッダーが付与
 
-## 認証が必要なエンドポイント
+## エンドポイントの認証要件
+
+### 認証が必要なエンドポイント（書き込み系）
 
 以下のエンドポイントは認証が必須です：
 
@@ -77,8 +79,23 @@ curl -X POST http://localhost:8000/api/logout \
 - `PUT /api/users/{id}` - ユーザー更新
 - `DELETE /api/users/{id}` - ユーザー削除
 - `POST /api/users/import` - CSVインポート
+- `POST /api/users/check-duplicates` - CSV重複チェック
 - `POST /api/users/bulk-delete` - 一括削除
 - `POST /api/users/bulk-export` - 一括エクスポート
+- `POST /api/users/bulk-export-fast` - 高速一括エクスポート
+
+### 認証不要のエンドポイント（読み取り専用）
+
+以下のエンドポイントは認証なしでアクセス可能です：
+
+- `GET /api/users` - ユーザー一覧取得
+- `GET /api/users/{id}` - ユーザー詳細取得
+- `GET /api/users/export` - CSVエクスポート
+- `GET /api/users/export-fast` - 高速CSVエクスポート
+- `GET /api/users/sample-csv` - サンプルCSVダウンロード
+- `GET /api/users/status-counts` - ステータス別カウント取得
+- `GET /api/pagination` - ページネーション付きユーザー一覧
+- `GET /api/pagination/status-counts` - ページネーション用ステータスカウント
 
 ## トラブルシューティング
 
