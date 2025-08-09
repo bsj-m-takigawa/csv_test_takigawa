@@ -369,6 +369,11 @@ class CsvController extends Controller
      */
     public function export(Request $request)
     {
+        // 入力バリデーション
+        $validated = $request->validate([
+            'status' => ['nullable', 'string', Rule::in(['active', 'pending', 'inactive', 'expired'])],
+        ]);
+        
         // 実行時間を無制限に設定
         set_time_limit(0);
         
@@ -385,7 +390,7 @@ class CsvController extends Controller
             'Expires' => '0',
         ];
 
-        return new StreamedResponse(function () use ($request) {
+        return new StreamedResponse(function () use ($validated) {
             // 大きなバッファサイズを設定（64KB）
             $bufferSize = 65536;
             $handle = fopen('php://output', 'w');
@@ -394,8 +399,9 @@ class CsvController extends Controller
             // BOM付きUTF-8でExcel対応
             fwrite($handle, chr(0xEF).chr(0xBB).chr(0xBF));
             
-            // ヘッダー行を書き込む
-            fwrite($handle, "ID,名前,メールアドレス,電話番号,住所,生年月日,性別,会員状態,メモ,プロフィール画像,ポイント,最終ログイン,作成日,更新日\n");
+            // ヘッダー行を書き込む（getCsvHeaders()メソッドを活用）
+            $csvHeaders = $this->getCsvHeaders();
+            fputcsv($handle, $csvHeaders);
 
             // 生SQLで直接PDOカーソルを使用（高速化）
             $pdo = DB::getPdo();
@@ -417,9 +423,9 @@ class CsvController extends Controller
                 FROM users';
             
             $params = [];
-            if ($request->has('status')) {
+            if (!empty($validated['status'])) {
                 $sql .= ' WHERE membership_status = ?';
-                $params[] = $request->status;
+                $params[] = $validated['status'];
             }
             
             $stmt = $pdo->prepare($sql);
@@ -484,6 +490,29 @@ class CsvController extends Controller
             }
         }
         return implode(',', $escaped) . "\n";
+    }
+    
+    /**
+     * CSVヘッダーを取得
+     */
+    private function getCsvHeaders(): array
+    {
+        return [
+            'ID',
+            '名前',
+            'メールアドレス',
+            '電話番号',
+            '住所',
+            '生年月日',
+            '性別',
+            '会員状態',
+            'メモ',
+            'プロフィール画像',
+            'ポイント',
+            '最終ログイン',
+            '作成日',
+            '更新日',
+        ];
     }
 
     /**
@@ -900,8 +929,8 @@ class CsvController extends Controller
                         ]);
                     }
 
-                    // ガベージコレクションを定期的に実行
-                    if ($exportedCount % 5000 === 0 && function_exists('gc_collect_cycles')) {
+                    // ガベージコレクションを定期的に実行（10000行ごとに変更）
+                    if ($exportedCount % 10000 === 0 && function_exists('gc_collect_cycles')) {
                         gc_collect_cycles();
                     }
                 }
