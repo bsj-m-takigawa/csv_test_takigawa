@@ -3,6 +3,7 @@
 import { useState, useRef, lazy, Suspense } from "react";
 import Link from "next/link";
 import { importUsers, downloadSampleCSV, checkDuplicates } from "@/lib/api/users";
+import { highlightText } from "@/lib/highlight";
 import {
   Button,
   Card,
@@ -745,17 +746,7 @@ export default function ImportUsersPage() {
                                 <TableHead className="w-16">#</TableHead>
                                 {csvPreview.headers.map((header, index) => (
                                   <TableHead key={index}>
-                                    {header}
-                                    {searchQuery && (
-                                      <span
-                                        dangerouslySetInnerHTML={{
-                                          __html: header.replace(
-                                            new RegExp(`(${searchQuery})`, "gi"),
-                                            '<mark class="bg-yellow-200 dark:bg-yellow-800">$1</mark>'
-                                          ),
-                                        }}
-                                      />
-                                    )}
+                                    {highlightText(header, searchQuery)}
                                   </TableHead>
                                 ))}
                               </TableRow>
@@ -773,18 +764,7 @@ export default function ImportUsersPage() {
                                     </TableCell>
                                     {row.map((cell, cellIndex) => (
                                       <TableCell key={cellIndex}>
-                                        {searchQuery ? (
-                                          <span
-                                            dangerouslySetInnerHTML={{
-                                              __html: cell.replace(
-                                                new RegExp(`(${searchQuery})`, "gi"),
-                                                '<mark class="bg-yellow-200 dark:bg-yellow-800">$1</mark>'
-                                              ),
-                                            }}
-                                          />
-                                        ) : (
-                                          cell
-                                        )}
+                                        {highlightText(cell, searchQuery)}
                                       </TableCell>
                                     ))}
                                   </TableRow>
