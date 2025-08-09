@@ -1,6 +1,6 @@
 import { getAuthHeaders } from './auth';
 import { handleAuthError } from './auth-utils';
-import { fetchWithAuth, downloadBlob, handleErrorResponse } from './fetch-utils';
+import { downloadBlob } from './fetch-utils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
@@ -154,15 +154,13 @@ export const importUsers = async (
 
 export const exportUsers = async () => {
   try {
-    const response = await fetchWithAuth(`${API_URL}/users/export`);
-
-    if (!response.ok) {
-      await handleErrorResponse(response);
+    const resp = await apiFetch(`${API_URL}/users/export`);
+    if (resp instanceof Response) {
+      const blob = await resp.blob();
+      downloadBlob(blob, `users_${new Date().toISOString()}.csv`);
+      return true;
     }
-
-    const blob = await response.blob();
-    downloadBlob(blob, `users_${new Date().toISOString()}.csv`);
-    return true;
+    throw new Error('Unexpected response type for export');
   } catch (error) {
     console.error("Error exporting users:", error);
     throw error;
@@ -201,32 +199,25 @@ export const bulkDeleteUsers = async (params: BulkOperationParams) => {
 
 export const bulkExportUsers = async (params: BulkOperationParams) => {
   try {
-    const response = await fetchWithAuth(`${API_URL}/users/bulk-export`, {
+    const resp = await apiFetch(`${API_URL}/users/bulk-export`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify(params),
     });
 
-    if (!response.ok) {
-      await handleErrorResponse(response);
-    }
-
-    const blob = await response.blob();
-    
-    // ファイル名をContent-Dispositionヘッダーから取得（可能な場合）
-    const contentDisposition = response.headers.get("content-disposition");
-    let filename = "bulk_export.csv";
-    if (contentDisposition) {
-      const matches = contentDisposition.match(/filename="([^"]+)"/);
-      if (matches) {
-        filename = matches[1];
+    if (resp instanceof Response) {
+      const blob = await resp.blob();
+      const contentDisposition = resp.headers.get("content-disposition");
+      let filename = "bulk_export.csv";
+      if (contentDisposition) {
+        const matches = contentDisposition.match(/filename=\"([^\"]+)\"/);
+        if (matches) {
+          filename = matches[1];
+        }
       }
+      downloadBlob(blob, filename);
+      return true;
     }
-
-    downloadBlob(blob, filename);
-    return true;
+    throw new Error('Unexpected response type for bulk export');
   } catch (error: unknown) {
     console.error("Error bulk exporting users:", error);
     throw error;
@@ -256,16 +247,10 @@ export const checkDuplicates = async (file: File) => {
     const formData = new FormData();
     formData.append("csv_file", file);
 
-    const response = await fetchWithAuth(`${API_URL}/users/check-duplicates`, {
+    return await apiFetch(`${API_URL}/users/check-duplicates`, {
       method: "POST",
       body: formData,
     });
-
-    if (!response.ok) {
-      await handleErrorResponse(response, "重複チェックに失敗しました");
-    }
-
-    return response.json();
   } catch (error) {
     console.error("Error checking duplicates:", error);
     throw error;
@@ -274,15 +259,13 @@ export const checkDuplicates = async (file: File) => {
 
 export const downloadSampleCSV = async () => {
   try {
-    const response = await fetchWithAuth(`${API_URL}/users/sample-csv`);
-
-    if (!response.ok) {
-      await handleErrorResponse(response);
+    const resp = await apiFetch(`${API_URL}/users/sample-csv`);
+    if (resp instanceof Response) {
+      const blob = await resp.blob();
+      downloadBlob(blob, 'sample_users.csv');
+      return true;
     }
-
-    const blob = await response.blob();
-    downloadBlob(blob, 'sample_users.csv');
-    return true;
+    throw new Error('Unexpected response type for sample CSV');
   } catch (error) {
     console.error("Error downloading sample CSV:", error);
     throw error;
