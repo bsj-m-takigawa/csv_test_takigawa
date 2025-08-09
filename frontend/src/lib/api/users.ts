@@ -1,3 +1,5 @@
+import { getAuthHeaders } from './auth';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 export interface User {
@@ -19,12 +21,16 @@ export interface User {
 
 // Fetch API helper function
 async function apiFetch(url: string, options: RequestInit = {}) {
+  const authHeaders = getAuthHeaders();
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    ...authHeaders,
+    ...(options.headers as Record<string, string> || {}),
+  };
+  
   const response = await fetch(url, {
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
     ...options,
+    headers,
   });
 
   if (!response.ok) {
@@ -205,23 +211,14 @@ export const bulkDeleteUsers = async (params: BulkOperationParams) => {
   try {
     console.log("Bulk delete params:", params); // デバッグ用
 
-    const response = await fetch(`${API_URL}/users/bulk-delete`, {
+    // apiFetchヘルパーを使用して認証ヘッダーを自動付与
+    const response = await apiFetch(`${API_URL}/users/bulk-delete`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify(params),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Bulk delete validation error:", errorData); // エラー詳細をログ出力
-      throw new Error(
-        errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`
-      );
-    }
-
-    return response.json();
+    // apiFetchがエラーハンドリングを行うため、直接レスポンスを返す
+    return response;
   } catch (error: unknown) {
     console.error("Error bulk deleting users:", error);
     throw error;
@@ -230,10 +227,13 @@ export const bulkDeleteUsers = async (params: BulkOperationParams) => {
 
 export const bulkExportUsers = async (params: BulkOperationParams) => {
   try {
+    // 認証ヘッダーを含むfetchを直接使用（blobレスポンスのため）
+    const authHeaders = getAuthHeaders();
     const response = await fetch(`${API_URL}/users/bulk-export-fast`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...authHeaders,
       },
       body: JSON.stringify(params),
     });
@@ -294,8 +294,11 @@ export const checkDuplicates = async (file: File) => {
     const formData = new FormData();
     formData.append("csv_file", file);
 
+    // 認証ヘッダーを追加（ファイルアップロードのためContent-Typeは設定しない）
+    const authHeaders = getAuthHeaders();
     const response = await fetch(`${API_URL}/users/check-duplicates`, {
       method: "POST",
+      headers: authHeaders,
       body: formData,
     });
 

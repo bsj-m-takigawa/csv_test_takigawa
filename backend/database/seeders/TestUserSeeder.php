@@ -16,6 +16,9 @@ class TestUserSeeder extends Seeder
     {
         DB::table('users')->truncate();
 
+        // テスト用の固定ユーザーを最初に作成
+        $this->createTestUsers();
+
         $batchSize = 500; // 100から500に増加
         $totalUsers = 1000; // テスト用に1000件のまま
         $batches = ceil($totalUsers / $batchSize);
@@ -76,5 +79,58 @@ class TestUserSeeder extends Seeder
             $this->command->error('TestUserSeeder failed: '.$e->getMessage());
             throw $e;
         }
+    }
+
+    /**
+     * テスト用の固定ユーザーを作成
+     */
+    private function createTestUsers(): void
+    {
+        $hashedPassword = Hash::make('password');
+        $currentTime = now();
+
+        // 管理者ユーザー
+        DB::table('users')->insert([
+            'name' => 'テスト管理者',
+            'email' => 'admin@example.com',
+            'email_verified_at' => $currentTime,
+            'password' => $hashedPassword,
+            'phone_number' => '090-1234-5678',
+            'address' => '東京都千代田区1-1-1',
+            'birth_date' => '1990-01-01',
+            'gender' => 'male',
+            'membership_status' => 'active',
+            'notes' => 'テスト用管理者アカウント',
+            'profile_image' => null,
+            'points' => 10000,
+            'last_login_at' => $currentTime,
+            'remember_token' => Str::random(10),
+            'created_at' => $currentTime,
+            'updated_at' => $currentTime,
+        ]);
+
+        // 一般ユーザー
+        DB::table('users')->insert([
+            'name' => 'テストユーザー',
+            'email' => 'user@example.com',
+            'email_verified_at' => $currentTime,
+            'password' => $hashedPassword,
+            'phone_number' => '090-9876-5432',
+            'address' => '大阪府大阪市中央区1-2-3',
+            'birth_date' => '1995-05-15',
+            'gender' => 'female',
+            'membership_status' => 'active',
+            'notes' => 'テスト用一般アカウント',
+            'profile_image' => null,
+            'points' => 5000,
+            'last_login_at' => $currentTime,
+            'remember_token' => Str::random(10),
+            'created_at' => $currentTime,
+            'updated_at' => $currentTime,
+        ]);
+
+        $this->command->info('テスト用固定ユーザーを作成しました:');
+        $this->command->info('- admin@example.com / password');
+        $this->command->info('- user@example.com / password');
     }
 }
