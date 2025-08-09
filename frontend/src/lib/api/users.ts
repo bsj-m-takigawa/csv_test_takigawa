@@ -24,12 +24,17 @@ export interface User {
 // Fetch API helper function
 async function apiFetch(url: string, options: RequestInit = {}) {
   const authHeaders = getAuthHeaders();
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+  const baseHeaders: HeadersInit = isFormData
+    ? {} // FormData の場合は Content-Type を自動付与させる
+    : { "Content-Type": "application/json" };
+
   const headers: HeadersInit = {
-    "Content-Type": "application/json",
+    ...baseHeaders,
     ...authHeaders,
-    ...(options.headers as Record<string, string> || {}),
+    ...((options.headers as Record<string, string>) || {}),
   };
-  
+
   const response = await fetch(url, {
     ...options,
     headers,
@@ -136,16 +141,11 @@ export const importUsers = async (
     formData.append("csv_file", file);
     formData.append("import_strategy", importStrategy);
 
-    const response = await fetchWithAuth(`${API_URL}/users/import`, {
+    // apiFetch で認証・エラー処理を統一
+    return await apiFetch(`${API_URL}/users/import`, {
       method: "POST",
       body: formData,
     });
-
-    if (!response.ok) {
-      await handleErrorResponse(response, "CSVインポートに失敗しました");
-    }
-
-    return response.json();
   } catch (error) {
     console.error("Error importing users:", error);
     throw error;

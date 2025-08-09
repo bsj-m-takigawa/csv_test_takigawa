@@ -24,9 +24,10 @@ class SecurityHeaders
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
         // Content Security Policy (CSP)
+        // API 応答に不要な 'unsafe-inline' / 'unsafe-eval' を排除し、より安全な既定値に調整
         $csp = "default-src 'self'; ".
-               "script-src 'self' 'unsafe-inline' 'unsafe-eval'; ".
-               "style-src 'self' 'unsafe-inline'; ".
+               "script-src 'self'; ".
+               "style-src 'self'; ".
                "img-src 'self' data: https:; ".
                "font-src 'self' data:; ".
                "connect-src 'self'; ".

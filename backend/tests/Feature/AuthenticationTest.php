@@ -100,17 +100,14 @@ class AuthenticationTest extends TestCase
     }
 
     /**
-     * 読み取り専用APIは認証なしでアクセスできることをテスト
+     * 認証が必要な読み取り系APIは未認証だと 401 になることをテスト
      */
-    public function test_public_routes_are_accessible_without_authentication()
+    public function test_protected_get_routes_require_authentication()
     {
         User::factory()->count(5)->create();
 
-        $response = $this->getJson('/api/users');
-        $response->assertOk();
-
-        $response = $this->getJson('/api/users/export');
-        $response->assertOk();
+        $this->getJson('/api/users')->assertUnauthorized();
+        $this->getJson('/api/users/export')->assertUnauthorized();
     }
 
     /**
