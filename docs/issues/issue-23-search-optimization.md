@@ -87,18 +87,12 @@ $results = $index->search($q, [
 
 2. **検索ロジック更新**
    ```php
-   // MySQLではフルテキスト検索を使用
-   $query->whereFullText(['name', 'email', 'phone_number'], $q);
-   
-   // SQLiteでは従来のLIKE検索（テスト環境用）
-   $query->where(function ($sub) use ($q) {
-       $sub->where('name', 'like', "%{$q}%")
-           ->orWhere('email', 'like', "%{$q}%")
-           ->orWhere('phone_number', 'like', "%{$q}%");
-   });
+   // UserモデルのスコープでDBごとの検索処理を統一
+   $query->search($q);
    ```
 
 3. **実装ファイル**
    - マイグレーション: `2025_08_06_190000_add_fulltext_index_to_users_table.php`
-   - コントローラー: `PaginationController.php` (Line 34-45, 112-123)
+   - モデル: `User.php` (`scopeSearch`)
+   - コントローラー: `PaginationController.php` / `UserController.php` / `CsvController.php`
    - テスト: `SearchPerformanceTest.php`
