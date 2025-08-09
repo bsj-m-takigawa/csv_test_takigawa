@@ -22,13 +22,15 @@ export interface User {
 // Fetch API helper function
 async function apiFetch(url: string, options: RequestInit = {}) {
   const authHeaders = getAuthHeaders();
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    ...authHeaders,
+    ...(options.headers as Record<string, string> || {}),
+  };
+  
   const response = await fetch(url, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...authHeaders,
-      ...(options.headers || {}),
-    },
+    headers,
   });
 
   if (!response.ok) {

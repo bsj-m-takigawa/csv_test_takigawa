@@ -21,7 +21,7 @@ export const AuthToken = {
 };
 
 // 認証ヘッダーを取得
-export const getAuthHeaders = () => {
+export const getAuthHeaders = (): Record<string, string> => {
   const token = AuthToken.get();
   if (token) {
     return {
