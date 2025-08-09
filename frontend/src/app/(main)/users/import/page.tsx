@@ -2,7 +2,7 @@
 
 import { useState, useRef, lazy, Suspense } from "react";
 import Link from "next/link";
-import { importUsers, downloadSampleCSV, checkDuplicates } from "../../../lib/api/users";
+import { importUsers, downloadSampleCSV, checkDuplicates } from "@/lib/api/users";
 import {
   Button,
   Card,

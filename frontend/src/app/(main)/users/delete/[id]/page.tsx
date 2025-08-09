@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { fetchUser, deleteUser, User } from "../../../../lib/api/users";
+import { fetchUser, deleteUser, User } from "@/lib/api/users";
 
 export default function DeleteUserPage() {
   const params = useParams();

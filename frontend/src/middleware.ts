@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// 認証が不要なパス
+// 認証が不要なパス（システム関連とログインページのみ）
 const publicPaths = [
   '/login',
   '/api/auth',
@@ -9,15 +9,6 @@ const publicPaths = [
   '/favicon.ico',
   '/manifest.json',
   '/sw.js',
-];
-
-// 認証が必要な操作のパス
-const protectedPaths = [
-  '/users/add',
-  '/users/edit',
-  '/users/delete',
-  '/users/import',
-  '/users/export',
 ];
 
 export function middleware(request: NextRequest) {
@@ -28,23 +19,21 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // ホームページとユーザー一覧（読み取り専用）は認証不要
-  if (pathname === '/' || pathname === '/users/list' || pathname.startsWith('/users/detail')) {
+  // ホームページのみ認証不要（ランディングページとして）
+  if (pathname === '/') {
     return NextResponse.next();
   }
 
-  // 保護されたパスの場合、認証チェック
-  if (protectedPaths.some(path => pathname.startsWith(path))) {
-    // クッキーまたはヘッダーからトークンを取得
-    const token = request.cookies.get('auth_token')?.value;
-    
-    if (!token) {
-      // 未認証の場合はログインページへリダイレクト
-      const url = request.nextUrl.clone();
-      url.pathname = '/login';
-      url.searchParams.set('returnUrl', pathname);
-      return NextResponse.redirect(url);
-    }
+  // それ以外の全てのページ（ユーザー一覧、詳細、編集など）は認証必須
+  // PII保護のため、ユーザー情報の閲覧も認証が必要
+  const token = request.cookies.get('auth_token')?.value;
+  
+  if (!token) {
+    // 未認証の場合はログインページへリダイレクト
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    url.searchParams.set('returnUrl', pathname);
+    return NextResponse.redirect(url);
   }
 
   return NextResponse.next();

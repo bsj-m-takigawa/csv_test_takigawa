@@ -142,8 +142,10 @@ export const importUsers = async (
     formData.append("csv_file", file);
     formData.append("import_strategy", importStrategy);
 
+    const authHeaders = getAuthHeaders();
     const response = await fetch(`${API_URL}/users/import`, {
       method: "POST",
+      headers: authHeaders,
       body: formData,
     });
 
@@ -184,7 +186,10 @@ export const importUsers = async (
 
 export const exportUsers = async () => {
   try {
-    const response = await fetch(`${API_URL}/users/export`);
+    const authHeaders = getAuthHeaders();
+    const response = await fetch(`${API_URL}/users/export`, {
+      headers: authHeaders,
+    });
 
     if (!response.ok) {
       // 認証エラーの場合はログインページへリダイレクト
@@ -364,7 +369,10 @@ export const checkDuplicates = async (file: File) => {
 
 export const downloadSampleCSV = async () => {
   try {
-    const response = await fetch(`${API_URL}/users/sample-csv`);
+    const authHeaders = getAuthHeaders();
+    const response = await fetch(`${API_URL}/users/sample-csv`, {
+      headers: authHeaders,
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
