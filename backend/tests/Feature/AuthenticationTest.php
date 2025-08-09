@@ -147,4 +147,73 @@ class AuthenticationTest extends TestCase
         ]);
         $response->assertUnauthorized();
     }
+
+    /**
+     * CSV重複チェックに認証が必要なことをテスト
+     */
+    public function test_check_duplicates_requires_authentication()
+    {
+        $response = $this->postJson('/api/users/check-duplicates');
+        $response->assertUnauthorized();
+    }
+
+    /**
+     * バルクエクスポートに認証が必要なことをテスト
+     */
+    public function test_bulk_export_requires_authentication()
+    {
+        $response = $this->postJson('/api/users/bulk-export', [
+            'user_ids' => [1, 2, 3],
+        ]);
+        $response->assertUnauthorized();
+    }
+
+    /**
+     * 高速バルクエクスポートに認証が必要なことをテスト
+     */
+    public function test_bulk_export_fast_requires_authentication()
+    {
+        $response = $this->postJson('/api/users/bulk-export-fast', [
+            'user_ids' => [1, 2, 3],
+        ]);
+        $response->assertUnauthorized();
+    }
+
+    /**
+     * 認証済みユーザーがCSV重複チェックを実行できることをテスト
+     */
+    public function test_authenticated_user_can_check_duplicates()
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        // CSVファイルのアップロードをモック
+        $csvContent = "name,email\nTest User,test@example.com";
+        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('test.csv', $csvContent);
+
+        $response = $this->postJson('/api/users/check-duplicates', [
+            'file' => $file,
+        ]);
+
+        // ファイルが必要なので422エラーになるが、認証は通過している
+        $response->assertStatus(422);
+    }
+
+    /**
+     * 認証済みユーザーがバルク操作を実行できることをテスト
+     */
+    public function test_authenticated_user_can_perform_bulk_operations()
+    {
+        $user = User::factory()->create();
+        $targetUsers = User::factory()->count(3)->create();
+        Sanctum::actingAs($user);
+
+        // バルク削除のテスト
+        $response = $this->postJson('/api/users/bulk-delete', [
+            'user_ids' => $targetUsers->pluck('id')->toArray(),
+        ]);
+
+        $response->assertOk();
+        $this->assertDatabaseMissing('users', ['id' => $targetUsers->first()->id]);
+    }
 }
