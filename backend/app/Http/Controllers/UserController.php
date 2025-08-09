@@ -16,9 +16,13 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::all();
+        // ページネーション付きでユーザーを取得（メモリ効率改善）
+        $perPage = $request->get('per_page', 15);
+        $perPage = min(max($perPage, 1), 100); // 1-100の範囲に制限
+        
+        $users = User::paginate($perPage);
 
         return response()->json($users);
     }
