@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\QueryHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
@@ -51,10 +52,12 @@ class PaginationController extends Controller
                 $query->whereFullText(['name', 'email', 'phone_number'], $q);
             } else {
                 // SQLite等の場合はLIKE検索（開発・テスト環境用）
-                $query->where(function ($sub) use ($q) {
-                    $sub->where('name', 'like', "%{$q}%")
-                        ->orWhere('email', 'like', "%{$q}%")
-                        ->orWhere('phone_number', 'like', "%{$q}%");
+                $escaped = QueryHelper::escapeLike($q);
+                $like = "%{$escaped}%";
+                $query->where(function ($sub) use ($like) {
+                    $sub->whereRaw("name LIKE ? ESCAPE '\\'", [$like])
+                        ->orWhereRaw("email LIKE ? ESCAPE '\\'", [$like])
+                        ->orWhereRaw("phone_number LIKE ? ESCAPE '\\'", [$like]);
                 });
             }
         }
@@ -142,10 +145,12 @@ class PaginationController extends Controller
                 $baseQuery->whereFullText(['name', 'email', 'phone_number'], $q);
             } else {
                 // SQLite等の場合はLIKE検索（開発・テスト環境用）
-                $baseQuery->where(function ($sub) use ($q) {
-                    $sub->where('name', 'like', "%{$q}%")
-                        ->orWhere('email', 'like', "%{$q}%")
-                        ->orWhere('phone_number', 'like', "%{$q}%");
+                $escaped = QueryHelper::escapeLike($q);
+                $like = "%{$escaped}%";
+                $baseQuery->where(function ($sub) use ($like) {
+                    $sub->whereRaw("name LIKE ? ESCAPE '\\'", [$like])
+                        ->orWhereRaw("email LIKE ? ESCAPE '\\'", [$like])
+                        ->orWhereRaw("phone_number LIKE ? ESCAPE '\\'", [$like]);
                 });
             }
         }

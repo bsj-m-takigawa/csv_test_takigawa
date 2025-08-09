@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\QueryHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -840,10 +841,12 @@ class CsvController extends Controller
                         if (config('database.default') === 'mysql') {
                             $query->whereFullText(['name', 'email', 'phone_number'], $q);
                         } else {
-                            $query->where(function ($sub) use ($q) {
-                                $sub->where('name', 'like', "%{$q}%")
-                                    ->orWhere('email', 'like', "%{$q}%")
-                                    ->orWhere('phone_number', 'like', "%{$q}%");
+                            $escaped = QueryHelper::escapeLike($q);
+                            $like = "%{$escaped}%";
+                            $query->where(function ($sub) use ($like) {
+                                $sub->whereRaw("name LIKE ? ESCAPE '\\'", [$like])
+                                    ->orWhereRaw("email LIKE ? ESCAPE '\\'", [$like])
+                                    ->orWhereRaw("phone_number LIKE ? ESCAPE '\\'", [$like]);
                             });
                         }
                     }
