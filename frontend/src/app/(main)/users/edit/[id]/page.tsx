@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { fetchUser, updateUser, User } from "@/lib/api/users";
+import { fetchUser, updateUser } from "@/lib/api/users";
+import { User } from "@/types/user";
 import {
   Button,
   Input,
@@ -42,7 +43,7 @@ export default function EditUserPage() {
     const loadUser = async () => {
       try {
         setLoading(true);
-        const userData = await fetchUser(userId);
+        const { data: userData } = await fetchUser(userId);
 
         setFormData({
           name: userData.name || "",

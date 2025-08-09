@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { fetchUser, User, deleteUser } from "@/lib/api/users";
+import { fetchUser, deleteUser } from "@/lib/api/users";
+import { User } from "@/types/user";
 import { Button, Card, CardHeader, CardTitle, CardContent, Alert, Badge } from "@/components/ui";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
 
@@ -22,7 +23,7 @@ export default function UserDetailPage() {
     const loadUser = async () => {
       try {
         setLoading(true);
-        const userData = await fetchUser(userId);
+        const { data: userData } = await fetchUser(userId);
         setUser(userData);
         setError(null);
       } catch (err) {
