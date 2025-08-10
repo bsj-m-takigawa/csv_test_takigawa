@@ -16,6 +16,13 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
+        \Log::info('Login attempt', [
+            'email' => $request->email,
+            'has_password' => !empty($request->password),
+            'device_name' => $request->device_name,
+            'headers' => $request->headers->all(),
+        ]);
+        
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
@@ -23,6 +30,11 @@ class AuthController extends Controller
         ]);
 
         $user = User::where('email', $request->email)->first();
+        
+        \Log::info('User lookup', [
+            'user_found' => $user !== null,
+            'user_id' => $user?->id,
+        ]);
 
         // タイミング攻撃対策：ユーザーが存在しない場合でも同等の計算時間を確保
         // bcryptのデフォルトハッシュを使用（Laravelのデフォルトパスワード）
@@ -31,8 +43,18 @@ class AuthController extends Controller
         // ユーザーが存在する場合は実際のハッシュ、存在しない場合はダミーハッシュで検証
         $hashToCheck = $user ? $user->password : $dummyHash;
         $isValidPassword = Hash::check($request->password, $hashToCheck);
+        
+        \Log::info('Password verification', [
+            'password_valid' => $isValidPassword,
+            'user_exists' => $user !== null,
+        ]);
 
         if (! $user || ! $isValidPassword) {
+            \Log::warning('Login failed', [
+                'email' => $request->email,
+                'user_exists' => $user !== null,
+                'password_valid' => $isValidPassword,
+            ]);
             throw ValidationException::withMessages([
                 'email' => ['認証情報が正しくありません。'],
             ])->status(422);
