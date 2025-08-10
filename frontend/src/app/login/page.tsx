@@ -26,8 +26,6 @@ function LoginForm() {
         device_name: "web-browser", // Sanctumで必要なデバイス名
       };
       
-      console.log("Login attempt:", { apiUrl, email });
-      
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
@@ -37,25 +35,15 @@ function LoginForm() {
         body: JSON.stringify(requestBody),
       });
 
-      console.log("Response status:", response.status);
-      console.log("Response headers:", {
-        contentType: response.headers.get("content-type"),
-        corsHeaders: response.headers.get("access-control-allow-origin"),
-      });
-      
       if (!response.ok) {
         const text = await response.text();
-        console.error("Raw response text:", text);
-        
         let data;
         try {
           data = JSON.parse(text);
         } catch (e) {
-          console.error("Failed to parse JSON:", e);
           data = { message: text || "ログインに失敗しました" };
         }
         
-        console.error("Login error response:", data);
         // Laravel ValidationExceptionのエラー構造に対応
         if (data.errors && data.errors.email) {
           throw new Error(data.errors.email[0] || data.message || "ログインに失敗しました");
@@ -303,7 +291,7 @@ function LoginForm() {
                   <p className="text-xs text-gray-600 text-center">
                     <span className="font-semibold">メール:</span> test@example.com
                     <br />
-                    <span className="font-semibold">パスワード:</span> Password123!
+                    <span className="font-semibold">パスワード:</span> password
                   </p>
                 </div>
               </div>
