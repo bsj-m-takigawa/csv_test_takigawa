@@ -19,23 +19,33 @@ function LoginForm() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"}/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            password,
-            device_name: "web-browser", // Sanctumで必要なデバイス名
-          }),
-        }
-      );
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"}/login`;
+      const requestBody = {
+        email,
+        password,
+        device_name: "web-browser", // Sanctumで必要なデバイス名
+      };
+      
+      console.log("Login attempt:", { apiUrl, email });
+      
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
 
+      console.log("Response status:", response.status);
+      
       if (!response.ok) {
-        const data = await response.json();
+        const data = await response.json().catch(() => ({ message: "ログインに失敗しました" }));
+        console.error("Login error response:", data);
+        // Laravel ValidationExceptionのエラー構造に対応
+        if (data.errors && data.errors.email) {
+          throw new Error(data.errors.email[0] || data.message || "ログインに失敗しました");
+        }
         throw new Error(data.message || "ログインに失敗しました");
       }
 
@@ -279,7 +289,7 @@ function LoginForm() {
                   <p className="text-xs text-gray-600 text-center">
                     <span className="font-semibold">メール:</span> test@example.com
                     <br />
-                    <span className="font-semibold">パスワード:</span> password
+                    <span className="font-semibold">パスワード:</span> Password123!
                   </p>
                 </div>
               </div>

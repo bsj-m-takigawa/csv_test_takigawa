@@ -35,7 +35,7 @@ class AuthController extends Controller
         if (! $user || ! $isValidPassword) {
             throw ValidationException::withMessages([
                 'email' => ['認証情報が正しくありません。'],
-            ]);
+            ])->status(422);
         }
 
         // 既存のトークンを削除（1デバイス1トークン制限）
