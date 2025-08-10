@@ -48,7 +48,12 @@ class CsvApiTest extends TestCase
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
 
-        $content = $response->streamedContent();
+        // streamedContent()の代わりにgetContent()を使用
+        // ストリーミングレスポンスの内容を適切に取得
+        ob_start();
+        $response->sendContent();
+        $content = ob_get_clean();
+        
         $this->assertStringContainsString('ID,名前,メールアドレス', $content);
         $this->assertStringContainsString($users->first()->email, $content);
     }

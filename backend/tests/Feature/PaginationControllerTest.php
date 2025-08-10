@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class PaginationControllerTest extends TestCase
@@ -16,6 +17,9 @@ class PaginationControllerTest extends TestCase
      */
     public function test_pagination_controller_returns_paginated_users_with_default_per_page()
     {
+        $authUser = User::factory()->create();
+        Sanctum::actingAs($authUser);
+        
         // 25件のユーザーを作成
         User::factory(25)->create();
 
