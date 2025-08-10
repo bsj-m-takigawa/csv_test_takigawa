@@ -38,9 +38,23 @@ function LoginForm() {
       });
 
       console.log("Response status:", response.status);
+      console.log("Response headers:", {
+        contentType: response.headers.get("content-type"),
+        corsHeaders: response.headers.get("access-control-allow-origin"),
+      });
       
       if (!response.ok) {
-        const data = await response.json().catch(() => ({ message: "ログインに失敗しました" }));
+        const text = await response.text();
+        console.error("Raw response text:", text);
+        
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          console.error("Failed to parse JSON:", e);
+          data = { message: text || "ログインに失敗しました" };
+        }
+        
         console.error("Login error response:", data);
         // Laravel ValidationExceptionのエラー構造に対応
         if (data.errors && data.errors.email) {
