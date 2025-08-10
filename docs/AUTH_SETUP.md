@@ -81,17 +81,15 @@ curl -X POST http://localhost:8000/api/logout \
 - `POST /api/users/import` - CSVインポート
 - `POST /api/users/check-duplicates` - CSV重複チェック
 - `POST /api/users/bulk-delete` - 一括削除
-- `POST /api/users/bulk-export` - 一括エクスポート
-- `POST /api/users/bulk-export-fast` - 高速一括エクスポート
+- `POST /api/users/bulk-export` - 一括エクスポート（高速ストリーミング版）
 
-### 認証不要のエンドポイント（読み取り専用）
+### 認証が必要なエンドポイント（読み取り専用）
 
-以下のエンドポイントは認証なしでアクセス可能です：
+以下のエンドポイントも認証が必要です（PII保護のため）：
 
 - `GET /api/users` - ユーザー一覧取得
 - `GET /api/users/{id}` - ユーザー詳細取得
-- `GET /api/users/export` - CSVエクスポート
-- `GET /api/users/export-fast` - 高速CSVエクスポート
+- `GET /api/users/export` - CSVエクスポート（高速ストリーミング版）
 - `GET /api/users/sample-csv` - サンプルCSVダウンロード
 - `GET /api/users/status-counts` - ステータス別カウント取得
 - `GET /api/pagination` - ページネーション付きユーザー一覧

@@ -76,8 +76,9 @@
   - `created_at/updated_at/membership_status` 等が投入可能。RBAC 必須前提で管理者のみ許可すべき。
 - CORS 設定
   - `supports_credentials: true`。本番で `FRONTEND_URL` を厳密に。
-- 機能差分（セキュリティ影響は小）
-  - フロントが `POST /users/bulk-export-fast` を呼ぶが、バックエンドは `POST /users/bulk-export` のみ。
+- ~~機能差分（セキュリティ影響は小）~~ **修正済み**
+  - ~~フロントが `POST /users/bulk-export-fast` を呼ぶが、バックエンドは `POST /users/bulk-export` のみ。~~
+  - **2025-08-10修正**: エンドポイントは正しく統一されている（`POST /users/bulk-export`）
 
 ---
 
