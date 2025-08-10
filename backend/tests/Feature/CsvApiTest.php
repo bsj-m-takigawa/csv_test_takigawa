@@ -21,7 +21,7 @@ class CsvApiTest extends TestCase
         Storage::fake('local');
 
         $header = 'ID,名前,メールアドレス,電話番号,住所,生年月日,性別,会員状態,メモ,プロフィール画像,ポイント';
-        $row1 = '1,Test User,test@example.com,1234567890,Test Address,2000-01-01,male,active,Test note,http://example.com/avatar.jpg,100';
+        $row1 = '999,Test User,newtest@example.com,1234567890,Test Address,2000-01-01,male,active,Test note,http://example.com/avatar.jpg,100';
         $content = implode("\n", [$header, $row1]);
 
         $file = UploadedFile::fake()->createWithContent('test.csv', $content);
@@ -33,7 +33,7 @@ class CsvApiTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJson(['message' => '1件を新規作成']);
-        $this->assertDatabaseHas('users', ['email' => 'test@example.com']);
+        $this->assertDatabaseHas('users', ['email' => 'newtest@example.com']);
     }
 
     public function test_can_export_csv(): void

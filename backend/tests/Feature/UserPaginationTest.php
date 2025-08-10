@@ -26,15 +26,21 @@ class UserPaginationTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonStructure([
-                'current_page',
                 'data' => [
                     '*' => ['id', 'name', 'email'],
                 ],
-                'per_page',
-                'total',
+                'meta' => [
+                    'current_page',
+                    'per_page',
+                    'total',
+                    'last_page',
+                    'from',
+                    'to',
+                ],
+                'links',
             ])
-            ->assertJsonPath('per_page', 15) // デフォルトは15件
-            ->assertJsonCount(15, 'data');
+            ->assertJsonPath('meta.per_page', 20) // デフォルトは20件
+            ->assertJsonCount(20, 'data');
     }
 
     /**
@@ -50,7 +56,7 @@ class UserPaginationTest extends TestCase
         $response = $this->getJson('/api/users?per_page=10');
 
         $response->assertStatus(200)
-            ->assertJsonPath('per_page', 10)
+            ->assertJsonPath('meta.per_page', 10)
             ->assertJsonCount(10, 'data');
     }
 
@@ -64,10 +70,15 @@ class UserPaginationTest extends TestCase
         
         User::factory(150)->create();
 
+        // per_page=200はバリデーションエラーとなる
         $response = $this->getJson('/api/users?per_page=200');
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['per_page']);
 
+        // per_page=100は正常に動作
+        $response = $this->getJson('/api/users?per_page=100');
         $response->assertStatus(200)
-            ->assertJsonPath('per_page', 100) // 100に制限される
+            ->assertJsonPath('meta.per_page', 100)
             ->assertJsonCount(100, 'data');
     }
 
@@ -81,10 +92,15 @@ class UserPaginationTest extends TestCase
         
         User::factory(5)->create();
 
+        // per_page=0はバリデーションエラーとなる
         $response = $this->getJson('/api/users?per_page=0');
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['per_page']);
 
+        // per_page=1は正常に動作
+        $response = $this->getJson('/api/users?per_page=1');
         $response->assertStatus(200)
-            ->assertJsonPath('per_page', 1) // 1に制限される
+            ->assertJsonPath('meta.per_page', 1)
             ->assertJsonCount(1, 'data');
     }
 
@@ -102,16 +118,16 @@ class UserPaginationTest extends TestCase
         $response = $this->getJson('/api/users?page=2&per_page=10');
 
         $response->assertStatus(200)
-            ->assertJsonPath('current_page', 2)
-            ->assertJsonPath('per_page', 10)
+            ->assertJsonPath('meta.current_page', 2)
+            ->assertJsonPath('meta.per_page', 10)
             ->assertJsonCount(10, 'data');
 
-        // 3ページ目を取得（残り5件）
+        // 3ページ目を取得（残り6件：認証ユーザー含む）
         $response = $this->getJson('/api/users?page=3&per_page=10');
 
         $response->assertStatus(200)
-            ->assertJsonPath('current_page', 3)
-            ->assertJsonCount(5, 'data');
+            ->assertJsonPath('meta.current_page', 3)
+            ->assertJsonCount(6, 'data');
     }
 
     /**

@@ -55,6 +55,9 @@ class CsvExportValidationTest extends TestCase
      */
     public function test_export_works_without_status_parameter(): void
     {
+        $authUser = User::factory()->create();
+        Sanctum::actingAs($authUser);
+        
         // テストユーザーを作成
         User::factory()->count(5)->create();
 
@@ -69,6 +72,9 @@ class CsvExportValidationTest extends TestCase
      */
     public function test_export_has_correct_csv_headers(): void
     {
+        $authUser = User::factory()->create();
+        Sanctum::actingAs($authUser);
+        
         // テストユーザーを作成
         User::factory()->create();
 
