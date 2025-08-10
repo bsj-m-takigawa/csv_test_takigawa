@@ -1,0 +1,67 @@
+name: Backend CI
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, xml, dom, sqlite3, pdo_sqlite
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            backend/vendor
+            ~/.composer/cache
+          key: ${{ runner.os }}-php84-composer-${{ hashFiles('backend/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php84-composer-
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          cp -n .env.example .env || true
+          composer install --no-interaction --prefer-dist --ansi
+
+      - name: Generate app key
+        working-directory: backend
+        run: php artisan key:generate --force --ansi
+
+      - name: Run Laravel Pint (Code Style)
+        working-directory: backend
+        run: |
+          ./vendor/bin/pint --test --ansi
+        continue-on-error: false
+
+      - name: Run PHPUnit Tests
+        working-directory: backend
+        run: ./vendor/bin/phpunit --colors=always
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: backend/storage/logs/
+          retention-days: 7
