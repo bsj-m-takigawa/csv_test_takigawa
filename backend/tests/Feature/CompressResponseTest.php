@@ -15,7 +15,7 @@ class CompressResponseTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         User::factory()->count(50)->create();
 
         $response = $this->getJson('/api/users', ['Accept-Encoding' => 'gzip']);
@@ -35,7 +35,7 @@ class CompressResponseTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         User::factory()->count(50)->create();
 
         $response = $this->getJson('/api/users');
@@ -48,7 +48,7 @@ class CompressResponseTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         User::factory()->create();
 
         $response = $this->getJson('/api/users', ['Accept-Encoding' => 'gzip']);

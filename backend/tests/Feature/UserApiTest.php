@@ -34,7 +34,7 @@ class UserApiTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         $user = User::factory()->create();
 
         $updateData = ['name' => 'Updated Name'];
@@ -50,7 +50,7 @@ class UserApiTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         $user = User::factory()->create();
 
         $response = $this->deleteJson("/api/users/{$user->id}");
@@ -63,7 +63,7 @@ class UserApiTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         $user = User::factory()->create();
 
         $response = $this->getJson("/api/users/{$user->id}");
@@ -76,7 +76,7 @@ class UserApiTest extends TestCase
     {
         $user = User::factory()->create();
         Sanctum::actingAs($user);
-        
+
         $response = $this->postJson('/api/users', ['name' => 'Test']);
 
         $response->assertStatus(422)

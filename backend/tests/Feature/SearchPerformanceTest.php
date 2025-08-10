@@ -19,7 +19,7 @@ class SearchPerformanceTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         // テスト環境でのパフォーマンステスト
         if (config('database.default') !== 'mysql') {
             $this->markTestSkipped('MySQLでのみフルテキスト検索をテストします');
@@ -65,7 +65,7 @@ class SearchPerformanceTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         if (config('database.default') !== 'mysql') {
             $this->markTestSkipped('MySQLでのみフルテキスト検索をテストします');
         }
@@ -105,7 +105,7 @@ class SearchPerformanceTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         // 特定のテストユーザーを作成
         $testUser = User::create([
             'name' => 'John テスト Smith',
@@ -149,7 +149,7 @@ class SearchPerformanceTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         if (config('database.default') !== 'mysql') {
             $this->markTestSkipped('MySQLでのみインデックス存在確認をテストします');
         }

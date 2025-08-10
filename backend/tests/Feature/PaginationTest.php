@@ -15,7 +15,7 @@ class PaginationTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         User::factory()->count(30)->create();
 
         $res = $this->getJson('/api/users');
@@ -38,7 +38,7 @@ class PaginationTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         User::factory()->count(55)->create();
 
         $res = $this->getJson('/api/users?page=2&per_page=10&sort=created_at&order=desc');
@@ -56,7 +56,7 @@ class PaginationTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         User::factory()->create(['name' => 'Taro Example', 'email' => 'taro@example.com']);
         User::factory()->create(['name' => 'Jiro Sample', 'email' => 'jiro@example.com']);
 
@@ -74,7 +74,7 @@ class PaginationTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         $res = $this->getJson('/api/users?page=0&per_page=1000&sort=invalid&order=down');
         $res->assertStatus(422)
             ->assertJsonStructure([

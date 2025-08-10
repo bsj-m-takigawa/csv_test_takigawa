@@ -18,7 +18,7 @@ class UserPaginationTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         // 20件のユーザーを作成
         User::factory(20)->create();
 
@@ -50,7 +50,7 @@ class UserPaginationTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         User::factory(30)->create();
 
         $response = $this->getJson('/api/users?per_page=10');
@@ -67,7 +67,7 @@ class UserPaginationTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         User::factory(150)->create();
 
         // per_page=200はバリデーションエラーとなる
@@ -89,7 +89,7 @@ class UserPaginationTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         User::factory(5)->create();
 
         // per_page=0はバリデーションエラーとなる
@@ -111,7 +111,7 @@ class UserPaginationTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         $users = User::factory(25)->create();
 
         // 2ページ目を取得（per_page=10）
@@ -138,7 +138,7 @@ class UserPaginationTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         // 1000件のユーザーを作成（本番環境では100万件を想定）
         User::factory(1000)->create();
 

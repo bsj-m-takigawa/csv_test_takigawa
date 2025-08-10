@@ -17,7 +17,7 @@ class CsvApiTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         Storage::fake('local');
 
         $header = 'ID,名前,メールアドレス,電話番号,住所,生年月日,性別,会員状態,メモ,プロフィール画像,ポイント';
@@ -40,7 +40,7 @@ class CsvApiTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         $users = User::factory()->count(3)->create();
 
         $response = $this->get('/api/users/export');
@@ -53,7 +53,7 @@ class CsvApiTest extends TestCase
         ob_start();
         $response->sendContent();
         $content = ob_get_clean();
-        
+
         $this->assertStringContainsString('ID,名前,メールアドレス', $content);
         $this->assertStringContainsString($users->first()->email, $content);
     }
