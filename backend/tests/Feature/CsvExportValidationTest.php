@@ -18,7 +18,7 @@ class CsvExportValidationTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         // 不正なstatusパラメータ
         $response = $this->get('/api/users/export?status=invalid_status');
 
@@ -33,7 +33,7 @@ class CsvExportValidationTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         // テストユーザーを作成
         User::factory()->create(['membership_status' => 'active']);
         User::factory()->create(['membership_status' => 'pending']);
@@ -57,7 +57,7 @@ class CsvExportValidationTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         // テストユーザーを作成
         User::factory()->count(5)->create();
 
@@ -74,7 +74,7 @@ class CsvExportValidationTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         // テストユーザーを作成
         User::factory()->create();
 
@@ -107,7 +107,7 @@ class CsvExportValidationTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         // 各ステータスのユーザーを作成
         User::factory()->count(3)->create(['membership_status' => 'active']);
         User::factory()->count(2)->create(['membership_status' => 'pending']);

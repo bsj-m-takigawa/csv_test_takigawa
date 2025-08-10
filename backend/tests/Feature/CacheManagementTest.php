@@ -21,7 +21,7 @@ class CacheManagementTest extends TestCase
         // 認証ユーザーを作成
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         // テストデータを作成
         User::factory()->count(5)->create();
 
@@ -43,7 +43,7 @@ class CacheManagementTest extends TestCase
         // 認証ユーザーを作成
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         // テストデータとキャッシュを作成
         User::factory()->count(3)->create();
 
@@ -79,7 +79,7 @@ class CacheManagementTest extends TestCase
         // 認証ユーザーを作成
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         // テストユーザーを作成
         $user = User::factory()->create();
 
@@ -111,7 +111,7 @@ class CacheManagementTest extends TestCase
         // 認証ユーザーを作成
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         // テストユーザーを作成
         $user = User::factory()->create();
 
@@ -140,7 +140,7 @@ class CacheManagementTest extends TestCase
         // 認証ユーザーを作成
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         // テストユーザーを作成
         $users = User::factory()->count(3)->create();
 
@@ -171,7 +171,7 @@ class CacheManagementTest extends TestCase
         // 認証ユーザーを作成
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         // テストデータを作成
         User::factory()->count(3)->create(['membership_status' => 'active']);
         User::factory()->count(2)->create(['membership_status' => 'inactive']);
@@ -214,7 +214,7 @@ class CacheManagementTest extends TestCase
         // 認証ユーザーを作成
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         Log::spy();
         Cache::forget('metrics:cache_hit');
         Cache::forget('metrics:cache_miss');

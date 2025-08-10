@@ -19,7 +19,7 @@ class PaginationControllerTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         // 25件のユーザーを作成
         User::factory(25)->create();
 
@@ -48,7 +48,7 @@ class PaginationControllerTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         User::factory(30)->create();
 
         $response = $this->getJson('/api/users?per_page=10');
@@ -65,7 +65,7 @@ class PaginationControllerTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         // バリデーションエラーが発生することを確認
         $response = $this->getJson('/api/users?per_page=200');
 
@@ -80,7 +80,7 @@ class PaginationControllerTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         // バリデーションエラーが発生することを確認
         $response = $this->getJson('/api/users?per_page=0');
 
@@ -95,7 +95,7 @@ class PaginationControllerTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         User::factory(25)->create();
 
         // 2ページ目を取得（per_page=10）
@@ -121,7 +121,7 @@ class PaginationControllerTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         User::factory()->create(['name' => 'John Doe']);
         User::factory()->create(['name' => 'Jane Smith']);
         User::factory(5)->create();
@@ -140,7 +140,7 @@ class PaginationControllerTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         User::factory(3)->create();
 
         $response = $this->getJson('/api/users?q=%');
@@ -159,7 +159,7 @@ class PaginationControllerTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         User::factory(3)->create(['membership_status' => 'active']);
         User::factory(2)->create(['membership_status' => 'inactive']);
         User::factory(1)->create(['membership_status' => 'pending']);
@@ -179,7 +179,7 @@ class PaginationControllerTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         $user1 = User::factory()->create(['name' => 'Alice']);
         $user2 = User::factory()->create(['name' => 'Bob']);
         $user3 = User::factory()->create(['name' => 'Charlie']);
@@ -199,7 +199,7 @@ class PaginationControllerTest extends TestCase
     {
         $authUser = User::factory()->create();
         Sanctum::actingAs($authUser);
-        
+
         User::factory(5)->create();
 
         // 最初のリクエスト

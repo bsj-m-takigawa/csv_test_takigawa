@@ -40,7 +40,7 @@ function LoginForm() {
         let data;
         try {
           data = JSON.parse(text);
-        } catch (e) {
+        } catch {
           data = { message: text || "ログインに失敗しました" };
         }
         
