@@ -17,6 +17,9 @@ class CsvMemoryTest extends TestCase
      */
     public function test_csv_export_memory_usage()
     {
+        $authUser = User::factory()->create();
+        Sanctum::actingAs($authUser);
+        
         // テスト用ユーザーを1000件作成
         User::factory()->count(1000)->create();
 
@@ -59,6 +62,9 @@ class CsvMemoryTest extends TestCase
      */
     public function test_csv_export_large_dataset()
     {
+        $authUser = User::factory()->create();
+        Sanctum::actingAs($authUser);
+        
         // 5000件のテストデータを作成
         User::factory()->count(5000)->create();
 
@@ -97,6 +103,9 @@ class CsvMemoryTest extends TestCase
      */
     public function test_csv_export_content_format()
     {
+        $authUser = User::factory()->create();
+        Sanctum::actingAs($authUser);
+        
         // 特定のデータを持つユーザーを作成
         $user = User::factory()->create([
             'name' => 'テストユーザー',

@@ -18,6 +18,9 @@ class CsvImportPasswordTest extends TestCase
      */
     public function test_new_user_password_is_set_from_csv(): void
     {
+        $authUser = User::factory()->create();
+        Sanctum::actingAs($authUser);
+        
         $csvContent = "名前,メールアドレス,パスワード\n田中太郎,tanaka@example.com,mypassword123";
         $file = UploadedFile::fake()->createWithContent('users.csv', $csvContent);
 
@@ -39,6 +42,9 @@ class CsvImportPasswordTest extends TestCase
      */
     public function test_new_user_gets_default_password_when_not_specified(): void
     {
+        $authUser = User::factory()->create();
+        Sanctum::actingAs($authUser);
+        
         $csvContent = "名前,メールアドレス\n鈴木花子,suzuki@example.com";
         $file = UploadedFile::fake()->createWithContent('users.csv', $csvContent);
 
@@ -61,6 +67,9 @@ class CsvImportPasswordTest extends TestCase
      */
     public function test_existing_user_password_not_changed_when_not_specified(): void
     {
+        $authUser = User::factory()->create();
+        Sanctum::actingAs($authUser);
+        
         // 既存ユーザーを作成
         $existingUser = User::factory()->create([
             'email' => 'existing@example.com',
@@ -89,6 +98,9 @@ class CsvImportPasswordTest extends TestCase
      */
     public function test_existing_user_password_not_changed_when_empty(): void
     {
+        $authUser = User::factory()->create();
+        Sanctum::actingAs($authUser);
+        
         // 既存ユーザーを作成
         $existingUser = User::factory()->create([
             'email' => 'existing2@example.com',
@@ -117,6 +129,9 @@ class CsvImportPasswordTest extends TestCase
      */
     public function test_existing_user_password_updated_when_specified(): void
     {
+        $authUser = User::factory()->create();
+        Sanctum::actingAs($authUser);
+        
         // 既存ユーザーを作成
         $existingUser = User::factory()->create([
             'email' => 'existing3@example.com',
@@ -145,6 +160,9 @@ class CsvImportPasswordTest extends TestCase
      */
     public function test_mixed_users_password_handling(): void
     {
+        $authUser = User::factory()->create();
+        Sanctum::actingAs($authUser);
+        
         // 既存ユーザーを作成
         $existingUser = User::factory()->create([
             'email' => 'existing@test.com',
