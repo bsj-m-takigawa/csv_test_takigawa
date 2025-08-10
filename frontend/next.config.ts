@@ -20,7 +20,9 @@ const nextConfig: NextConfig = {
   
   // パフォーマンス最適化
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
   },
   
   experimental: {
