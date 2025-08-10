@@ -3,15 +3,19 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class UserApiTest extends TestCase
 {
-    use DatabaseTransactions;
+    use RefreshDatabase;
 
     public function test_can_create_user(): void
     {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
         $userData = [
             'name' => 'Test User',
             'email' => 'test@example.com',
@@ -28,6 +32,9 @@ class UserApiTest extends TestCase
 
     public function test_can_update_user(): void
     {
+        $authUser = User::factory()->create();
+        Sanctum::actingAs($authUser);
+        
         $user = User::factory()->create();
 
         $updateData = ['name' => 'Updated Name'];
@@ -41,6 +48,9 @@ class UserApiTest extends TestCase
 
     public function test_can_delete_user(): void
     {
+        $authUser = User::factory()->create();
+        Sanctum::actingAs($authUser);
+        
         $user = User::factory()->create();
 
         $response = $this->deleteJson("/api/users/{$user->id}");
@@ -51,6 +61,9 @@ class UserApiTest extends TestCase
 
     public function test_can_show_user(): void
     {
+        $authUser = User::factory()->create();
+        Sanctum::actingAs($authUser);
+        
         $user = User::factory()->create();
 
         $response = $this->getJson("/api/users/{$user->id}");
@@ -61,6 +74,9 @@ class UserApiTest extends TestCase
 
     public function test_create_user_validation_fails(): void
     {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+        
         $response = $this->postJson('/api/users', ['name' => 'Test']);
 
         $response->assertStatus(422)

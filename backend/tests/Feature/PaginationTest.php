@@ -3,15 +3,19 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class PaginationTest extends TestCase
 {
-    use DatabaseTransactions;
+    use RefreshDatabase;
 
     public function test_default_pagination()
     {
+        $authUser = User::factory()->create();
+        Sanctum::actingAs($authUser);
+        
         User::factory()->count(30)->create();
 
         $res = $this->getJson('/api/users');
@@ -24,7 +28,7 @@ class PaginationTest extends TestCase
 
         $json = $res->json();
         $this->assertCount(20, $json['data']);
-        $this->assertEquals(30, $json['meta']['total']);
+        $this->assertEquals(31, $json['meta']['total']); // 30 created + 1 auth user
         $this->assertEquals(1, $json['meta']['current_page']);
         $this->assertEquals(20, $json['meta']['per_page']);
         $this->assertEquals(2, $json['meta']['last_page']);
@@ -32,6 +36,9 @@ class PaginationTest extends TestCase
 
     public function test_pagination_params_and_sorting()
     {
+        $authUser = User::factory()->create();
+        Sanctum::actingAs($authUser);
+        
         User::factory()->count(55)->create();
 
         $res = $this->getJson('/api/users?page=2&per_page=10&sort=created_at&order=desc');
@@ -39,7 +46,7 @@ class PaginationTest extends TestCase
 
         $json = $res->json();
         $this->assertCount(10, $json['data']);
-        $this->assertEquals(55, $json['meta']['total']);
+        $this->assertEquals(56, $json['meta']['total']); // 55 created + 1 auth user
         $this->assertEquals(2, $json['meta']['current_page']);
         $this->assertEquals(10, $json['meta']['per_page']);
         $this->assertEquals(6, $json['meta']['last_page']);
@@ -47,6 +54,9 @@ class PaginationTest extends TestCase
 
     public function test_query_filtering()
     {
+        $authUser = User::factory()->create();
+        Sanctum::actingAs($authUser);
+        
         User::factory()->create(['name' => 'Taro Example', 'email' => 'taro@example.com']);
         User::factory()->create(['name' => 'Jiro Sample', 'email' => 'jiro@example.com']);
 
@@ -62,6 +72,9 @@ class PaginationTest extends TestCase
 
     public function test_validation_errors()
     {
+        $authUser = User::factory()->create();
+        Sanctum::actingAs($authUser);
+        
         $res = $this->getJson('/api/users?page=0&per_page=1000&sort=invalid&order=down');
         $res->assertStatus(422)
             ->assertJsonStructure([
