@@ -124,7 +124,7 @@ class PaginationController extends Controller
             fn () => $this->getStatusCounts($validated)
         );
 
-        return response()->json($counts);
+        return response()->json(['data' => $counts]);
     }
 
     private function getStatusCounts($validated)
