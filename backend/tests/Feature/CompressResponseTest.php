@@ -3,15 +3,19 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class CompressResponseTest extends TestCase
 {
-    use DatabaseTransactions;
+    use RefreshDatabase;
 
     public function test_response_is_gzipped_when_client_accepts(): void
     {
+        $authUser = User::factory()->create();
+        Sanctum::actingAs($authUser);
+        
         User::factory()->count(50)->create();
 
         $response = $this->getJson('/api/users', ['Accept-Encoding' => 'gzip']);
@@ -29,6 +33,9 @@ class CompressResponseTest extends TestCase
 
     public function test_response_is_not_gzipped_without_accept_encoding(): void
     {
+        $authUser = User::factory()->create();
+        Sanctum::actingAs($authUser);
+        
         User::factory()->count(50)->create();
 
         $response = $this->getJson('/api/users');
@@ -39,6 +46,9 @@ class CompressResponseTest extends TestCase
 
     public function test_small_response_is_not_gzipped_even_if_client_accepts(): void
     {
+        $authUser = User::factory()->create();
+        Sanctum::actingAs($authUser);
+        
         User::factory()->create();
 
         $response = $this->getJson('/api/users', ['Accept-Encoding' => 'gzip']);

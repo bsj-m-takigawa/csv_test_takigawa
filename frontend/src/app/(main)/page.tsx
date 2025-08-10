@@ -61,20 +61,20 @@ export default function Home() {
 
       // ステータスカウント結果を処理
       const statusCounts =
-        statusCountsResult.status === "fulfilled"
+        statusCountsResult.status === "fulfilled" && statusCountsResult.value?.data
           ? statusCountsResult.value.data
           : { total: 0, active: 0, pending: 0, inactive: 0, expired: 0 };
 
       // 新規ユーザー数を処理
       const recentUsers =
-        recentUsersResult.status === "fulfilled" ? recentUsersResult.value.meta?.total || 0 : 0;
+        recentUsersResult.status === "fulfilled" ? recentUsersResult.value?.meta?.total || 0 : 0;
 
       setStats({
-        totalUsers: statusCounts.total || 0,
-        activeUsers: statusCounts.active || 0,
-        pendingUsers: statusCounts.pending || 0,
-        inactiveUsers: statusCounts.inactive || 0,
-        expiredUsers: statusCounts.expired || 0,
+        totalUsers: statusCounts?.total || 0,
+        activeUsers: statusCounts?.active || 0,
+        pendingUsers: statusCounts?.pending || 0,
+        inactiveUsers: statusCounts?.inactive || 0,
+        expiredUsers: statusCounts?.expired || 0,
         recentUsers,
         loading: false,
         error: null,
