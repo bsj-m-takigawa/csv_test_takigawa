@@ -89,6 +89,7 @@ function UserListContent() {
     inactive: 0,
     pending: 0,
     expired: 0,
+    total: 0,
   });
 
   // 削除モーダル用の状態
@@ -134,7 +135,15 @@ function UserListContent() {
   // ステータスカウントを取得する関数
   const loadStatusCounts = useCallback(async () => {
     try {
-      const { data: counts } = await fetchStatusCounts({ q: searchQuery || undefined });
+      const response = await fetchStatusCounts({ q: searchQuery || undefined });
+      // APIレスポンスがundefinedやnullの場合のフォールバック
+      const counts = response?.data || {
+        active: 0,
+        inactive: 0,
+        pending: 0,
+        expired: 0,
+        total: 0,
+      };
       setStatusCounts(counts);
     } catch (err) {
       console.error("Failed to load status counts:", err);
@@ -144,6 +153,7 @@ function UserListContent() {
         inactive: 0,
         pending: 0,
         expired: 0,
+        total: 0,
       });
     }
   }, [searchQuery]);
@@ -661,10 +671,10 @@ function UserListContent() {
                     id: "status",
                     label: "ステータス",
                     options: [
-                      { value: "active", label: "アクティブ", count: statusCounts.active },
-                      { value: "inactive", label: "非アクティブ", count: statusCounts.inactive },
-                      { value: "pending", label: "保留中", count: statusCounts.pending },
-                      { value: "expired", label: "期限切れ", count: statusCounts.expired },
+                      { value: "active", label: "アクティブ", count: statusCounts?.active || 0 },
+                      { value: "inactive", label: "非アクティブ", count: statusCounts?.inactive || 0 },
+                      { value: "pending", label: "保留中", count: statusCounts?.pending || 0 },
+                      { value: "expired", label: "期限切れ", count: statusCounts?.expired || 0 },
                     ],
                     multiple: true,
                   },
@@ -747,14 +757,14 @@ function UserListContent() {
                         id: "status",
                         label: "ステータス",
                         options: [
-                          { value: "active", label: "アクティブ", count: statusCounts.active },
+                          { value: "active", label: "アクティブ", count: statusCounts?.active || 0 },
                           {
                             value: "inactive",
                             label: "非アクティブ",
-                            count: statusCounts.inactive,
+                            count: statusCounts?.inactive || 0,
                           },
-                          { value: "pending", label: "保留中", count: statusCounts.pending },
-                          { value: "expired", label: "期限切れ", count: statusCounts.expired },
+                          { value: "pending", label: "保留中", count: statusCounts?.pending || 0 },
+                          { value: "expired", label: "期限切れ", count: statusCounts?.expired || 0 },
                         ],
                         multiple: true,
                       },
